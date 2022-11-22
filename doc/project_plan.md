@@ -34,12 +34,10 @@ There are two different models for the linear regression which are implemented u
 $$
 \begin{aligned}
 GPA_i &\sim N(\mu_i, \sigma) \\
-\mu_i &= \alpha + \beta \cdot HSGPA_i + \gamma \cdot SATV_i + \delta \cdot SATM_i + ... \\
-\sigma &\sim N(0, \sigma_0) \\
-\alpha &\sim N(\mu_{\alpha}, \sigma_{\alpha}) \\
-\beta &\sim N(\mu_{\beta}, \sigma_{\beta}) \\
-\gamma &\sim N(\mu_{\gamma}, \sigma_{\gamma}) \\
-\delta &\sim N(\mu_{\delta}, \sigma_{\delta}) \\
+\mu_i &= \alpha + \beta_1 \cdot HSGPA_i + \beta_2 \cdot SATV_i + \beta_3 \cdot SATM_i + \beta_4 \cdot HU_i + \beta_5 \cdot SS_i \\
+\sigma &\sim N(0, 10) \\
+\alpha &\sim N(0, 100) \\
+\beta_k &\sim N(0, 100) \\
 \end{aligned}
 $$
 
@@ -48,13 +46,17 @@ $$
 $$
 \begin{aligned}
 GPA_{ij} &\sim N(\mu_{ij}, \sigma) \\
-\mu_{ij} &= \alpha_j + \beta_j \cdot HSGPA_i +  ... \\
-\sigma &\sim N(0, \sigma_0) \\
-\alpha_j &\sim N(\mu_{\alpha }, \sigma_{\alpha }) \\
-\beta_j &\sim N(\mu_{\beta }, \sigma_{\beta }) \\
-\mu_{\alpha } &\sim N(0,1) \\
-\sigma_{\alpha } &\sim N(0,1) \\
-\mu_{\beta } &\sim N(0,1) \\
-\sigma_{\beta } &\sim N(0,1) \\
+\mu_{ij} &= \alpha_j + \beta_{1j} \cdot HSGPA_i + \beta_{2j} \cdot SATV_i + \beta_{3j} \cdot SATM_i + \beta_{4j} \cdot HU_i + \beta_{5j} \cdot SS_i \\
+\sigma &\sim N(0, 10) \\
+\alpha_j &\sim N(\mu_{\alpha}, \sigma_{\alpha}) \\
+\beta_{1j} &\sim N(\mu_{\beta_1}, \sigma_{\beta_1}) \\
+\beta_{2j} &\sim N(\mu_{\beta_2}, \sigma_{\beta_2}) \\
+\beta_{3j} &\sim N(\mu_{\beta_3}, \sigma_{\beta_3}) \\
+\beta_{4j} &\sim N(\mu_{\beta_4}, \sigma_{\beta_4}) \\
+\beta_{5j} &\sim N(\mu_{\beta_5}, \sigma_{\beta_5}) \\
+\mu_{\alpha} &\sim N(0,100) \\
+\sigma_{\alpha} &\sim N(0,10) \\
+\mu_{\beta_k} &\sim N(0,100) \\
+\sigma_{\beta_k} &\sim N(0,10) \\
 \end{aligned}
 $$
