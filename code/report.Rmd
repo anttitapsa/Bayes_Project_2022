@@ -1,0 +1,57 @@
+---
+title: "Untitled"
+author: "Antti Huttunen"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+```{r}
+set.seed(123)
+library(cmdstanr)
+library(Stat2Data)
+data("FirstYearGPA")
+```
+
+# Data
+
+```{r}
+male_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==1,]
+male_non_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==0,]
+female_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==1,]
+female_non_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==0,]
+```
+
+```{r}
+data_hierarchical <- list(N1 = nrow(male_white),
+                            N2 = nrow(male_non_white),
+                            N3 = nrow(female_white),
+                            N4 = nrow(female_non_white),
+                            x1 = subset(male_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                            x2 = subset(male_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                            x3 = subset(female_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                            x4 = subset(female_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                            y1 = male_white$GPA,
+                            y2 = male_non_white$GPA,
+                            y3 = female_white$GPA,
+                            y4 = female_non_white$GPA)
+```
+
+
+# Model 
+
+```{r}
+writeLines(readLines("hierarchical.stan"))
+writeLines(readLines("pooled.stan"))
+```
+
+
+```{r}
+mod_pooled <- cmdstan_model("pooled.stan")
+mod_hierarchical <- cmdstan_model("hierarchical.stan")
+```
+
+```{r}
+fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 2000)
+```
+
+
+

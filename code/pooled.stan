@@ -1,35 +1,30 @@
 // Pooled model.
-
+// Variables: HSGPA, SATM, SATV, HU, SS
 data {
   int<lower=0> N;
-  matrix[N,10] d;
-  
-  real pmualpha;
-  real psalpha;
-  vector[9] pmubetas;
-  vector[9] psbetas;
-  real pssigma;
+  matrix[N,5] x;
+  vector[N] y;
 }
 
 parameters {
   real alpha;
-  vector[9] betas;
+  vector[5] betas;
   real<lower=0> sigma;
 }
 
 transformed parameters {
   vector[N] mu;
   mu += alpha;
-  for (i in 1:9)
-    mu += betas[i]*d[,i+1];
+  for (i in 1:5)
+    mu += betas[i]*x[,i];
 }
 
 model {
   // priors
-  alpha ~ normal(pmualpha, psalpha);
-  betas ~ normal(pmubetas, psbetas);
-  sigma ~ normal(0, pssigma);
+  alpha ~ normal(0, 100);
+  betas ~ normal(0, 100);
+  sigma ~ normal(0, 10);
   
   // likelihood
-  d[,1] ~ normal(mu, sigma);
+  y ~ normal(mu, sigma);
 }
