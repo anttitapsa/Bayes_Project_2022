@@ -14,9 +14,10 @@ parameters {
 
 transformed parameters {
   vector[N] mu;
-  mu += alpha;
+  mu = alpha + betas[1]*x[,1] + betas[2]*x[,2] + betas[3]*x[,3] + betas[4]*x[,4] + betas[5]*x[,5];
+  /*mu += alpha;
   for (i in 1:5)
-    mu += betas[i]*x[,i];
+    mu += betas[i]*x[,i];*/
 }
 
 model {
@@ -26,5 +27,5 @@ model {
   sigma ~ normal(0, 10);
   
   // likelihood
-  y ~ normal(mu, sigma);
+  y ~ normal(mu , sigma);
 }

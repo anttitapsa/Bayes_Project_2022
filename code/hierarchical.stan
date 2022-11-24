@@ -30,27 +30,16 @@ parameters {
   
   // hyperparameters
   real pmualpha;
-  real psalpha;
+  real<lower=0> psalpha;
   vector[5] pmubetas;
-  vector[5] psbetas;
+  vector<lower=0>[5] psbetas;
 }
 
 transformed parameters {
-  vector[N1] mu1;
-  vector[N2] mu2;
-  vector[N3] mu3;
-  vector[N4] mu4;
-  
-  mu1 += alpha1;
-  mu2 += alpha2;
-  mu3 += alpha3;
-  mu4 += alpha4;
-  for (i in 1:5){
-    mu1 += betas1[i]*x1[,i];
-    mu2 += betas2[i]*x2[,i];
-    mu3 += betas3[i]*x3[,i];
-    mu4 += betas4[i]*x4[,i];
-  }
+  vector[N1] mu1 = alpha1 + betas1[1]*x1[,1] + betas1[2]*x1[,2] + betas1[3]*x1[,3] + betas1[4]*x1[,4] + betas1[5]*x1[,5];
+  vector[N2] mu2 = alpha2 + betas2[1]*x2[,1] + betas2[2]*x2[,2] + betas2[3]*x2[,3] + betas2[4]*x2[,4] + betas2[5]*x2[,5];
+  vector[N3] mu3 = alpha3 + betas3[1]*x3[,1] + betas3[2]*x3[,2] + betas3[3]*x3[,3] + betas3[4]*x3[,4] + betas3[5]*x3[,5];
+  vector[N4] mu4 = alpha4 + betas4[1]*x4[,1] + betas4[2]*x4[,2] + betas4[3]*x4[,3] + betas4[4]*x4[,4] + betas4[5]*x4[,5];
 }
 
 model {

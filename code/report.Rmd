@@ -1,26 +1,29 @@
 ---
-title: "Untitled"
-author: "Antti Huttunen"
+title: "BDA project report"
+author: "Amanda Aarnio, Anni Niskanen, Antti Huttunen"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
-```{r}
+
+\newpage
+# Introduction 
+```{r, warning=FALSE, message=FALSE}
 set.seed(123)
 library(cmdstanr)
 library(Stat2Data)
 data("FirstYearGPA")
 ```
+\newpage
+# Data and Problem 
 
-# Data
-
-```{r}
+```{r, warning=FALSE, message=FALSE}
 male_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==1,]
 male_non_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==0,]
 female_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==1,]
 female_non_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==0,]
 ```
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 data_hierarchical <- list(N1 = nrow(male_white),
                             N2 = nrow(male_non_white),
                             N3 = nrow(female_white),
@@ -33,25 +36,77 @@ data_hierarchical <- list(N1 = nrow(male_white),
                             y2 = male_non_white$GPA,
                             y3 = female_white$GPA,
                             y4 = female_non_white$GPA)
+data_pooled <- list(N = nrow(FirstYearGPA),
+                    x = subset(FirstYearGPA, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                    y = FirstYearGPA$GPA)
 ```
 
+\newpage
+# Models 
 
-# Model 
+## Pooled model 
 
-```{r}
-writeLines(readLines("hierarchical.stan"))
+**Mathematical notation**
+
+$$
+\begin{aligned}
+GPA_i &\sim N(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta_1 \cdot HSGPA_i + \beta_2 \cdot SATV_i + \beta_3 \cdot SATM_i + \beta_4 \cdot HU_i + \beta_5 \cdot SS_i \\
+\sigma &\sim N(0, 10) \\
+\alpha &\sim N(0, 100) \\
+\beta_k &\sim N(0, 100) \\
+\end{aligned}
+$$
+```{r, warning=FALSE, message=FALSE}
 writeLines(readLines("pooled.stan"))
-```
-
-
-```{r}
 mod_pooled <- cmdstan_model("pooled.stan")
-mod_hierarchical <- cmdstan_model("hierarchical.stan")
+fit_pooled <- mod_pooled$sample(data_pooled, refresh = 2000)
 ```
 
-```{r}
+
+### Hierarchical model 
+
+$$
+\begin{aligned}
+GPA_{ij} &\sim N(\mu_{ij}, \sigma) \\
+\mu_{ij} &= \alpha_j + \beta_{1j} \cdot HSGPA_i + \beta_{2j} \cdot SATV_i + \beta_{3j} \cdot SATM_i + \beta_{4j} \cdot HU_i + \beta_{5j} \cdot SS_i \\
+\sigma &\sim N(0, 10) \\
+\alpha_j &\sim N(\mu_{\alpha}, \sigma_{\alpha}) \\
+\beta_{1j} &\sim N(\mu_{\beta_1}, \sigma_{\beta_1}) \\
+\beta_{2j} &\sim N(\mu_{\beta_2}, \sigma_{\beta_2}) \\
+\beta_{3j} &\sim N(\mu_{\beta_3}, \sigma_{\beta_3}) \\
+\beta_{4j} &\sim N(\mu_{\beta_4}, \sigma_{\beta_4}) \\
+\beta_{5j} &\sim N(\mu_{\beta_5}, \sigma_{\beta_5}) \\
+\mu_{\alpha} &\sim N(0,100) \\
+\sigma_{\alpha} &\sim N(0,10) \\
+\mu_{\beta_k} &\sim N(0,100) \\
+\sigma_{\beta_k} &\sim N(0,10) \\
+\end{aligned}
+$$
+
+```{r, warning=FALSE, message=FALSE}
+writeLines(readLines("hierarchical.stan"))
+mod_hierarchical <- cmdstan_model("hierarchical.stan")
 fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 2000)
 ```
+\newpage
+# Analysis and Results
+
+## Converge diagnostics
+
+## Posterior predictive checks
+
+## Prior sensitivity analysis
+
+\newpage
+# Discussion
+
+\newpage
+# Conclusion
+
+\newpage
+# Self-reflection
+
 
 
 
