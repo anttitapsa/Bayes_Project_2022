@@ -14,6 +14,8 @@ data {
   vector[N2] y2;
   vector[N3] y3;
   vector[N4] y4;
+  real musigma;
+  real sigmasigma;
 }
 
 parameters {
@@ -44,11 +46,11 @@ transformed parameters {
 
 model {
   // hyperpriors
-  pmualpha ~ normal(0, 30); // changed form 100 to 50
-  psalpha ~ normal(0, 10);
+  pmualpha ~ normal(0, musigma); // changed form 100 to 50
+  psalpha ~ normal(0, sigmasigma);
   for (i in 1:5){
-    pmubetas[i] ~ normal(0, 30); // changed form 100 to 50
-    psbetas[i] ~ normal(0, 10); 
+    pmubetas[i] ~ normal(0, musigma); // changed form 100 to 50
+    psbetas[i] ~ normal(0, sigmasigma); 
   }
   
   // priors
@@ -60,7 +62,7 @@ model {
   betas2 ~ normal(pmubetas, psbetas);
   betas3 ~ normal(pmubetas, psbetas);
   betas4 ~ normal(pmubetas, psbetas);
-  sigma ~ normal(0, 10);
+  sigma ~ normal(0, sigmasigma);
   
   // likelihoods
   y1 ~ normal(mu1, sigma);

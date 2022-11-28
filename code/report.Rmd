@@ -34,7 +34,9 @@ data_hierarchical <- list(N1 = nrow(male_white),
                             y1 = male_white$GPA,
                             y2 = male_non_white$GPA,
                             y3 = female_white$GPA,
-                            y4 = female_non_white$GPA)
+                            y4 = female_non_white$GPA,
+                            musigma = 100,
+                            sigmasigma = 10)
 data_pooled <- list(N = nrow(FirstYearGPA),
                     x = subset(FirstYearGPA, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
                     y = FirstYearGPA$GPA)
@@ -56,14 +58,16 @@ GPA_i &\sim N(\mu_i, \sigma) \\
 \beta_k &\sim N(0, 100) \\
 \end{aligned}
 $$
-```{r, warning=FALSE, message=FALSE}
+```{r}
 writeLines(readLines("pooled.stan"))
 mod_pooled <- cmdstan_model("pooled.stan")
-fit_pooled <- mod_pooled$sample(data_pooled, refresh = 2000)
+fit_pooled <- mod_pooled$sample(data_pooled, refresh = 2000, seed = 123)
 ```
 
 
 ### Hierarchical model 
+
+**Mathematical notation**
 
 $$
 \begin{aligned}
@@ -83,15 +87,43 @@ GPA_{ij} &\sim N(\mu_{ij}, \sigma) \\
 \end{aligned}
 $$
 
-```{r, warning=FALSE, message=FALSE}
+```{r}
 writeLines(readLines("hierarchical.stan"))
 mod_hierarchical <- cmdstan_model("hierarchical.stan")
-fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 2000)
 ```
+```{r}
+fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 2000, seed = 123)
+```
+
 \newpage
 # Analysis and Results
 
 ## Converge diagnostics
+
+### pooled model
+
+```{r}
+sum(fit_pooled$summary()$rhat > 1.01)
+sum(fit_pooled$summary()$rhat < 0.99)
+```
+No divergence
+
+### hierarchical model
+
+```{r}
+sum(fit_hierarchical$summary()$rhat > 1.01)
+sum(fit_hierarchical$summary()$rhat < 0.99)
+```
+Divergence: 172 of 4000 (4%)
+
+ESS:
+To-do 
+Check whar's good ess!?
+
+Questions for TA:
+- What does it mean that values are higher that 1.01?
+- What's the difference between ess_bulk and ess_tail?
+- What's ESS? We had difficulties to understand course book.
 
 ## Posterior predictive checks
 
