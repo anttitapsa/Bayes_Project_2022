@@ -5,7 +5,6 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
-\newpage
 # Introduction 
 ```{r, warning=FALSE, message=FALSE}
 set.seed(123)

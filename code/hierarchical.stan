@@ -44,10 +44,10 @@ transformed parameters {
 
 model {
   // hyperpriors
-  pmualpha ~ normal(0, 100);
+  pmualpha ~ normal(0, 30); // changed form 100 to 50
   psalpha ~ normal(0, 10);
   for (i in 1:5){
-    pmubetas[i] ~ normal(0, 100); 
+    pmubetas[i] ~ normal(0, 30); // changed form 100 to 50
     psbetas[i] ~ normal(0, 10); 
   }
   
