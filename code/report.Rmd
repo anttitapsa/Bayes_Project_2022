@@ -43,9 +43,10 @@ data_pooled <- list(N = nrow(FirstYearGPA),
 ```
 
 \newpage
-# Models 
 
-## Pooled model 
+# Models
+
+## Pooled model
 
 **Mathematical notation**
 
@@ -65,7 +66,7 @@ fit_pooled <- mod_pooled$sample(data_pooled, refresh = 2000, seed = 123)
 ```
 
 
-### Hierarchical model 
+### Hierarchical model
 
 **Mathematical notation**
 
@@ -91,11 +92,17 @@ $$
 writeLines(readLines("hierarchical.stan"))
 mod_hierarchical <- cmdstan_model("hierarchical.stan")
 ```
+
 ```{r}
 fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 2000, seed = 123)
 ```
 
+
+As can be seen from the above code lines, default values were used for running the MCMC chains. That is, 4 chains of 2000 iterations were run, and the first 1000 iterations of each chain were considered warm-up.
+
+
 \newpage
+
 # Analysis and Results
 
 ## Converge diagnostics
@@ -130,12 +137,15 @@ Questions for TA:
 ## Prior sensitivity analysis
 
 \newpage
+
 # Discussion
 
 \newpage
+
 # Conclusion
 
 \newpage
+
 # Self-reflection
 
 
