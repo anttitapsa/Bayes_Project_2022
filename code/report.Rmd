@@ -7,7 +7,6 @@ output: pdf_document
 
 # Introduction 
 ```{r, warning=FALSE, message=FALSE}
-set.seed(123)
 library(cmdstanr)
 library(Stat2Data)
 data("FirstYearGPA")
@@ -94,7 +93,8 @@ mod_hierarchical <- cmdstan_model("hierarchical.stan")
 ```
 
 ```{r}
-fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 2000, seed = 123)
+fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 2000,
+                                           seed = 123)
 ```
 
 
