@@ -29,3 +29,9 @@ model {
   // likelihood
   y ~ normal(mu , sigma);
 }
+
+generated quantities {
+  vector[N] ypred;
+  for(i in 1:N)
+    ypred[i]= normal_rng(mu[i], sigma);
+}

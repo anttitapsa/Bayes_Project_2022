@@ -70,3 +70,18 @@ model {
   y3 ~ normal(mu3, sigma);
   y4 ~ normal(mu4, sigma);
 }
+
+generated quantities{
+  vector[N1] ypred1;
+  vector[N2] ypred2;
+  vector[N3] ypred3;
+  vector[N4] ypred4;
+  for (i in 1:N1)
+    ypred1[i] = normal_rng(mu1[i], sigma);
+  for (i in 1:N2)
+    ypred2[i] = normal_rng(mu2[i], sigma);
+  for (i in 1:N3)
+    ypred3[i] = normal_rng(mu3[i], sigma);
+  for (i in 1:N4)
+    ypred4[i] = normal_rng(mu4[i], sigma);
+}

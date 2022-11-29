@@ -8,6 +8,7 @@ output: pdf_document
 # Introduction 
 ```{r, warning=FALSE, message=FALSE}
 library(cmdstanr)
+library(bayesplot)
 library(Stat2Data)
 data("FirstYearGPA")
 ```
@@ -61,7 +62,7 @@ $$
 ```{r}
 writeLines(readLines("pooled.stan"))
 mod_pooled <- cmdstan_model("pooled.stan")
-fit_pooled <- mod_pooled$sample(data_pooled, refresh = 2000, seed = 123)
+fit_pooled <- mod_pooled$sample(data_pooled, refresh = 2000, seed = 03091900)
 ```
 
 
@@ -94,7 +95,7 @@ mod_hierarchical <- cmdstan_model("hierarchical.stan")
 
 ```{r}
 fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 2000,
-                                           seed = 123)
+                                           seed = 03091900)
 ```
 
 
@@ -121,11 +122,11 @@ No divergence
 sum(fit_hierarchical$summary()$rhat > 1.01)
 sum(fit_hierarchical$summary()$rhat < 0.99)
 ```
-Divergence: 172 of 4000 (4%)
+Divergence: 218 of 4000 (5%)
 
 ESS:
 To-do 
-Check whar's good ess!?
+Check what's good ess!?
 
 Questions for TA:
 - What does it mean that values are higher that 1.01?
@@ -134,8 +135,67 @@ Questions for TA:
 
 ## Posterior predictive checks
 
+**Pooled model**
+```{r}
+y <- FirstYearGPA$GPA
+ypred <- fit_pooled$draws("ypred", format = "matrix")
+ppc_hist(y, ypred[1:48,])
+```
+```{r}
+ppc_dens_overlay(y, ypred[1:100,])
+```
+```{r}
+ppc_ecdf_overlay(y, ypred[1:100,])
+```
+
+**Hierarchical model**
+```{r}
+y1 <- data_hierarchical$y1
+ypred1 <- fit_hierarchical$draws("ypred1", format = "matrix")
+ppc_hist(y1, ypred1[1:48,])
+```
+```{r}
+ppc_dens_overlay(y1, ypred1[1:100,])
+```
+```{r}
+ppc_ecdf_overlay(y1, ypred1[1:100,])
+```
+```{r}
+y2 <- data_hierarchical$y2
+ypred2 <- fit_hierarchical$draws("ypred2", format = "matrix")
+
+ppc_hist(y2, ypred2[1:48,])
+ppc_dens_overlay(y2, ypred2[1:100,])
+ppc_ecdf_overlay(y2, ypred2[1:100,])
+```
+```{r}
+y3 <- data_hierarchical$y3
+ypred3 <- fit_hierarchical$draws("ypred3", format = "matrix")
+
+ppc_hist(y3, ypred3[1:48,])
+ppc_dens_overlay(y3, ypred3[1:100,])
+ppc_ecdf_overlay(y3, ypred3[1:100,])
+```
+```{r}
+y4 <- data_hierarchical$y4
+ypred4 <- fit_hierarchical$draws("ypred4", format = "matrix")
+
+ppc_hist(y4, ypred4[1:48,])
+ppc_dens_overlay(y4, ypred4[1:100,])
+ppc_ecdf_overlay(y4, ypred4[1:100,])
+```
 ## Prior sensitivity analysis
 
+Priors
+Normal(0, 100) + Normal(0, 10)
+Normal(0, 1) + Normal(0, 10)
+Normal(0, 1000) + Normal(0,10)
+Normal(0, 10) + Normal(0,10)
+Normal(0, 50) + Normal(0,10)
+ and vice versa 
+ 
+Normal (0,100) + Normal (0,100)
+etc.
 \newpage
 
 # Discussion
