@@ -39,18 +39,22 @@ parameters {
 }
 
 transformed parameters {
-  vector[N1] mu1 = alpha1 + betas1[1]*x1[,1] + betas1[2]*x1[,2] + betas1[3]*x1[,3] + betas1[4]*x1[,4] + betas1[5]*x1[,5];
-  vector[N2] mu2 = alpha2 + betas2[1]*x2[,1] + betas2[2]*x2[,2] + betas2[3]*x2[,3] + betas2[4]*x2[,4] + betas2[5]*x2[,5];
-  vector[N3] mu3 = alpha3 + betas3[1]*x3[,1] + betas3[2]*x3[,2] + betas3[3]*x3[,3] + betas3[4]*x3[,4] + betas3[5]*x3[,5];
-  vector[N4] mu4 = alpha4 + betas4[1]*x4[,1] + betas4[2]*x4[,2] + betas4[3]*x4[,3] + betas4[4]*x4[,4] + betas4[5]*x4[,5];
+  vector[N1] mu1 = alpha1 + betas1[1]*x1[,1] + betas1[2]*x1[,2] + betas1[3]*x1[,3]
+                   + betas1[4]*x1[,4] + betas1[5]*x1[,5];
+  vector[N2] mu2 = alpha2 + betas2[1]*x2[,1] + betas2[2]*x2[,2] + betas2[3]*x2[,3]
+                   + betas2[4]*x2[,4] + betas2[5]*x2[,5];
+  vector[N3] mu3 = alpha3 + betas3[1]*x3[,1] + betas3[2]*x3[,2] + betas3[3]*x3[,3]
+                   + betas3[4]*x3[,4] + betas3[5]*x3[,5];
+  vector[N4] mu4 = alpha4 + betas4[1]*x4[,1] + betas4[2]*x4[,2] + betas4[3]*x4[,3]
+                   + betas4[4]*x4[,4] + betas4[5]*x4[,5];
 }
 
 model {
   // hyperpriors
-  pmualpha ~ normal(0, musigma); // changed form 100 to 50
+  pmualpha ~ normal(0, musigma);
   psalpha ~ normal(0, sigmasigma);
   for (i in 1:5){
-    pmubetas[i] ~ normal(0, musigma); // changed form 100 to 50
+    pmubetas[i] ~ normal(0, musigma);
     psbetas[i] ~ normal(0, sigmasigma); 
   }
   
@@ -77,6 +81,9 @@ generated quantities{
   vector[N2] ypred2;
   vector[N3] ypred3;
   vector[N4] ypred4;
+  vector[N1+N2+N3+N4] log_lik;
+  
+  // Generate predictive distributions for GPA
   for (i in 1:N1)
     ypred1[i] = normal_rng(mu1[i], sigma);
   for (i in 1:N2)
@@ -85,4 +92,14 @@ generated quantities{
     ypred3[i] = normal_rng(mu3[i], sigma);
   for (i in 1:N4)
     ypred4[i] = normal_rng(mu4[i], sigma);
+    
+  // log likelihoods
+  for (i in 1:N1)
+    log_lik[i] = normal_lpdf(y1[i] | mu1[i], sigma);
+  for (i in 1:N2)
+    log_lik[N1+i] = normal_lpdf(y2[i] | mu2[i], sigma);
+  for (i in 1:N3)
+    log_lik[N1+N2+i] = normal_lpdf(y3[i] | mu3[i], sigma);
+  for (i in 1:N4)
+    log_lik[N1+N2+N3+i] = normal_lpdf(y4[i] | mu4[i], sigma);
 }
