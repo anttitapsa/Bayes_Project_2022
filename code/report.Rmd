@@ -220,6 +220,20 @@ Normal (0,100) + Normal (0,100)
 Normal (0,100) + Normal (0,50)
 Normal (0,100) + Normal (0,1)
 
+## Model comparison, LOO-CV
+
+```{r}
+library(loo)
+
+log_lik_pooled <- fit_pooled$draws("log_lik", format = "matrix")
+log_lik_hierarchical <- fit_hierarchical$draws("log_lik", format = "matrix")
+
+loo_pooled <- loo(log_lik_pooled)
+loo_hierarchical <- loo(log_lik_hierarchical)
+
+loo_compare(list("pooled" = loo_pooled, "hierarchical" = loo_hierarchical))
+```
+
 \newpage
 
 # Discussion
