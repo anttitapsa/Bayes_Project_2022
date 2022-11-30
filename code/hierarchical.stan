@@ -14,6 +14,7 @@ data {
   vector[N2] y2;
   vector[N3] y3;
   vector[N4] y4;
+  
   real musigma;
   real sigmasigma;
 }

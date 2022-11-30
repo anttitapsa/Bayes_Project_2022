@@ -4,6 +4,9 @@ data {
   int<lower=0> N;
   matrix[N,5] x;
   vector[N] y;
+  
+  real musigma;
+  real sigmasigma;
 }
 
 parameters {
@@ -22,12 +25,12 @@ transformed parameters {
 
 model {
   // priors
-  alpha ~ normal(0, 100);
-  betas ~ normal(0, 100);
-  sigma ~ normal(0, 10);
+  alpha ~ normal(0, musigma);
+  betas ~ normal(0, musigma);
+  sigma ~ normal(0, sigmasigma);
   
   // likelihood
-  y ~ normal(mu , sigma);
+  y ~ normal(mu, sigma);
 }
 
 generated quantities {
