@@ -7,6 +7,8 @@ output: pdf_document
 
 # Introduction
 
+Can the grade point averages (GPAs) of first-year college students be predicted based on high school GPA and other factors. This report presents a solution for this problem by applying two statiscal models to predict the first-year college GPA. The models are constracted and compared according to Bayesian data analysis concepts.
+
 ```{r, warning=FALSE, message=FALSE}
 library(cmdstanr)
 library(bayesplot)
@@ -19,6 +21,31 @@ data("FirstYearGPA")
 \newpage
 
 # Data and Problem 
+
+Description of the data and the analysis problem. Provide information where the data was obtained, 
+
+The data contains information from a sample of 219 first year students at a midwestern college in 1996. The data has 10 variables:
+
+```
+GPA           First-year college GPA on a 0.0 to 4.0 scale
+HSGPA         High school GPA on a 0.0 to 4.0 scale
+SATV          Verbal/critical reading SAT score
+SATM          Math SAT score
+Male          1= male, 0= female
+HU            Number of credit hours earned in humanities courses in high school
+SS            Number of credit hours earned in social science courses in high school
+FirstGen      1= student is the first in her or his family to attend college, 0=otherwise
+White         1= white students, 0= others
+CollegeBound  1=attended a high school where >=50% students intended to go on to college, 0=otherwise
+```
+The data can be obtained from \url{https://vincentarelbundock.github.io/Rdatasets/doc/Stat2Data/FirstYearGPA.html}. Our models use all numerical values (HSGPA, SATV, SATM, HU and SS) to predict the first-year college GPA (GPA). In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors.
+
+```{r}
+counts <- table(White=FirstYearGPA$White, Male=FirstYearGPA$Male)
+barplot(counts,
+  xlab="Gender", col=c("darkblue","red"),
+  legend = c('Non-White', 'White'), ylab = 'Count', names=c('Female','Male'))
+```
 
 \newpage
 
@@ -137,26 +164,32 @@ sum(summary_pooled$rhat > 1.01)
 sum(summary_pooled$rhat < 0.99)
 ```
 
-No divergence
+```{r}
+mean(fit_pooled$summary()$ess_tail)
+sum(fit_pooled$summary()$ess_tail<400)
+mean(fit_pooled$summary()$ess_bulk)
+sum(fit_pooled$summary()$ess_bulk<400)
+```
+
+None of the $\hat{R}$-values for the pooled model exceeds 1.01 which indicates that there are no problems with the convergence of the set of simulated chains. The effective sample size (ESS) is over 400 (recommended threshold with four parallel chains, 100 per chain) for all of the ess_bulk and ess_tail values which indicates that the $\hat{R}$-estimate can be trusted to make decisions about convergence and the quality of the chains. In addition, the model does not observe divergence.
 
 ### Hierarchical model
 
 ```{r}
-summary_hierarchical <- fit_hierarchical$summary()
-sum(summary_hierarchical$rhat > 1.01)
-sum(summary_hierarchical$rhat < 0.99)
+sum(fit_hierarchical$summary()$rhat > 1.01)
+sum(fit_hierarchical$summary()$rhat < 0.99)
 ```
 
-Divergence: 218 of 4000 (5%)
 
-ESS:
-To-do 
-Check what's good ess!?
+```{r}
+mean(fit_hierarchical$summary()$ess_tail)
+sum(fit_hierarchical$summary()$ess_tail<400)
+mean(fit_hierarchical$summary()$ess_bulk)
+sum(fit_hierarchical$summary()$ess_bulk<400)
+```
 
-Questions for TA:
-- What does it mean that values are higher that 1.01?
-- What's the difference between ess_bulk and ess_tail?
-- What's ESS? We had difficulties to understand course book.
+For the hierarchical model a few $\hat{R}$-values exceed 1.01 and a few ESS-values are below 400. The model gives divergence of approximately 5%. These facts can indicate that there might be some problems with the convergence. On the other hand, these values do not differ significantly from the desired values the probability of having problems with convergence is small.
+
 
 ## Posterior predictive checks
 
