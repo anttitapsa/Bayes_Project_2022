@@ -10,7 +10,9 @@ output: pdf_document
 ```{r, warning=FALSE, message=FALSE}
 library(cmdstanr)
 library(bayesplot)
+library(loo)
 library(Stat2Data)
+
 data("FirstYearGPA")
 ```
 
@@ -130,8 +132,9 @@ As can be seen from the above code lines, default values were used for running t
 ### Pooled model
 
 ```{r}
-sum(fit_pooled$summary()$rhat > 1.01)
-sum(fit_pooled$summary()$rhat < 0.99)
+summary_pooled <- fit_pooled$summary()
+sum(summary_pooled$rhat > 1.01)
+sum(summary_pooled$rhat < 0.99)
 ```
 
 No divergence
@@ -139,8 +142,9 @@ No divergence
 ### Hierarchical model
 
 ```{r}
-sum(fit_hierarchical$summary()$rhat > 1.01)
-sum(fit_hierarchical$summary()$rhat < 0.99)
+summary_hierarchical <- fit_hierarchical$summary()
+sum(summary_hierarchical$rhat > 1.01)
+sum(summary_hierarchical$rhat < 0.99)
 ```
 
 Divergence: 218 of 4000 (5%)
@@ -220,11 +224,42 @@ Normal (0,100) + Normal (0,100)
 Normal (0,100) + Normal (0,50)
 Normal (0,100) + Normal (0,1)
 
-## Model comparison, LOO-CV
+## Model comparison
+
+NOTE: unfinished table
 
 ```{r}
-library(loo)
+dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
+                 c("pooled", "h. group 1", "h. group 2",
+                   "h. group 3", "h. group 4"))
+post_table <- matrix(nrow = 6, ncol = 5, dimnames = dimnames)
 
+# Fill 1st column
+for (i in 1:6) {
+  mean <- summary_pooled$mean[1+i]
+  sd <- summary_pooled$sd[1+i]
+  post_table[i,1] <- "N()"
+}
+# Fill other columns
+# first alphas
+for (i in 1:4) {
+  mean <- summary_hierarchical$mean[1+i]
+  sd <- summary_hierarchical$sd[1+i]
+  post_table[1, 1+i] <- "N()"
+}
+# then betas
+for (i in 1:4) {
+  for(j in 1:5) {
+    mean <- summary_hierarchical$mean[5+(i-1)*5+j]
+    sd <- summary_hierarchical$sd[5+(i-1)*5+j]
+    post_table[j+1,i+1] <- "N()"
+  }
+}
+
+post_table
+```
+
+```{r}
 log_lik_pooled <- fit_pooled$draws("log_lik", format = "matrix")
 log_lik_hierarchical <- fit_hierarchical$draws("log_lik", format = "matrix")
 
