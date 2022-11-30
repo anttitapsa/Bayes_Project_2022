@@ -18,33 +18,6 @@ data("FirstYearGPA")
 
 # Data and Problem 
 
-```{r, warning=FALSE, message=FALSE}
-male_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==1,]
-male_non_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==0,]
-female_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==1,]
-female_non_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==0,]
-```
-
-```{r, warning=FALSE, message=FALSE}
-data_hierarchical <- list(N1 = nrow(male_white),
-                            N2 = nrow(male_non_white),
-                            N3 = nrow(female_white),
-                            N4 = nrow(female_non_white),
-                            x1 = subset(male_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-                            x2 = subset(male_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-                            x3 = subset(female_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-                            x4 = subset(female_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-                            y1 = male_white$GPA,
-                            y2 = male_non_white$GPA,
-                            y3 = female_white$GPA,
-                            y4 = female_non_white$GPA,
-                            musigma = 100,
-                            sigmasigma = 10)
-data_pooled <- list(N = nrow(FirstYearGPA),
-                    x = subset(FirstYearGPA, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-                    y = FirstYearGPA$GPA)
-```
-
 \newpage
 
 # Models
@@ -62,10 +35,33 @@ GPA_i &\sim N(\mu_i, \sigma) \\
 \beta_k &\sim N(0, 100) \\
 \end{aligned}
 $$
+
+**Stan code**
+
 ```{r}
 writeLines(readLines("pooled.stan"))
+```
+
+**Running the model**
+
+```{r, warning=FALSE, message=FALSE}
+male_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==1,]
+male_non_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==0,]
+female_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==1,]
+female_non_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==0,]
+```
+
+```{r, warning=FALSE, message=FALSE}
+data_pooled <- list(N = nrow(FirstYearGPA),
+                    x = subset(FirstYearGPA, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                    y = FirstYearGPA$GPA,
+                    musigma = 100,
+                    sigmasigma = 10)
+```
+
+```{r}
 mod_pooled <- cmdstan_model("pooled.stan")
-fit_pooled <- mod_pooled$sample(data_pooled, refresh = 2000, seed = 03091900)
+fit_pooled <- mod_pooled$sample(data_pooled, refresh = 0, seed = 03091900)
 ```
 
 ### Hierarchical model
@@ -90,10 +86,34 @@ GPA_{ij} &\sim N(\mu_{ij}, \sigma) \\
 \end{aligned}
 $$
 
+**Stan code**
+
 ```{r}
 writeLines(readLines("hierarchical.stan"))
+```
+
+**Running the model
+
+```{r}
+data_hierarchical <- list(N1 = nrow(male_white),
+                            N2 = nrow(male_non_white),
+                            N3 = nrow(female_white),
+                            N4 = nrow(female_non_white),
+                            x1 = subset(male_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                            x2 = subset(male_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                            x3 = subset(female_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                            x4 = subset(female_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                            y1 = male_white$GPA,
+                            y2 = male_non_white$GPA,
+                            y3 = female_white$GPA,
+                            y4 = female_non_white$GPA,
+                            musigma = 100,
+                            sigmasigma = 10)
+```
+
+```{r}
 mod_hierarchical <- cmdstan_model("hierarchical.stan")
-fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 2000,
+fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 0,
                                            seed = 03091900)
 ```
 
@@ -194,7 +214,7 @@ Tests
 Normal(0, 1000) + Normal(0,10)
 Normal(0, 50) + Normal(0,10)
 Normal(0, 10) + Normal(0,10)
-Normal(0, 1) + Normal(0, 10)
+Normal(0, 1) + Normal(0,10)
   and vice versa
 Normal (0,100) + Normal (0,100)
 Normal (0,100) + Normal (0,50)
