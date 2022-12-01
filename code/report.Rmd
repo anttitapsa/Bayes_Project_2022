@@ -2,16 +2,23 @@
 title: "BDA project report"
 author: "Amanda Aarnio, Anni Niskanen, Antti Huttunen"
 date: "`r Sys.Date()`"
-output: pdf_document
+output: 
+  pdf_document:
+    number_sections: true
+    toc: yes
+    toc_depth: 1
 ---
+
+\newpage
 
 # Introduction
 
 Can the grade point averages (GPAs) of first-year college students be predicted based on high school GPA and other factors. This report presents a solution for this problem by applying two statiscal models to predict the first-year college GPA. The models are constracted and compared according to Bayesian data analysis concepts.
 
-```{r, warning=FALSE, message=FALSE}
+```{r libraries, warning=FALSE, message=FALSE}
 library(cmdstanr)
 library(bayesplot)
+library(gridExtra)
 library(loo)
 library(Stat2Data)
 
@@ -40,7 +47,7 @@ CollegeBound  1=attended a high school where >=50% students intended to go on to
 ```
 The data can be obtained from \url{https://vincentarelbundock.github.io/Rdatasets/doc/Stat2Data/FirstYearGPA.html}. Our models use all numerical values (HSGPA, SATV, SATM, HU and SS) to predict the first-year college GPA (GPA). In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors.
 
-```{r}
+```{r data_barplot}
 counts <- table(White=FirstYearGPA$White, Male=FirstYearGPA$Male)
 barplot(counts,
   xlab="Gender", col=c("darkblue","red"),
@@ -51,7 +58,11 @@ barplot(counts,
 
 # Models
 
+In this project, two different models are utilised: pooled and hierarchical model. Both are are covered in following sections. The mathematical notations, Stan implementations, and stan model runs are included in the sections. The both of the models follow the linear Gaussian model whose expected values are constructed using linear function with variables found in data (HSGPA, SATV, SATM, HU, and SS) and parameters $\alpha$, $\beta_1$, $\beta_2$, $\beta_3$, $\beta_4$, and $\beta_5$.   
+
 ## Pooled model
+
+In pooled model, all the expected values are constructed using the common parameters $\alpha$ and $\beta$s with weakly informative priors. All the GPAs have common $\sigma$. 
 
 **Mathematical notation**
 
@@ -73,14 +84,8 @@ writeLines(readLines("pooled.stan"))
 
 **Running the model**
 
-```{r, warning=FALSE, message=FALSE}
-male_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==1,]
-male_non_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==0,]
-female_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==1,]
-female_non_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==0,]
-```
 
-```{r, warning=FALSE, message=FALSE}
+```{r data_pooled, warning=FALSE, message=FALSE}
 data_pooled <- list(N = nrow(FirstYearGPA),
                     x = subset(FirstYearGPA, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
                     y = FirstYearGPA$GPA,
@@ -88,12 +93,14 @@ data_pooled <- list(N = nrow(FirstYearGPA),
                     sigmasigma = 10)
 ```
 
-```{r}
+```{r pooled_model_fit}
 mod_pooled <- cmdstan_model("pooled.stan")
 fit_pooled <- mod_pooled$sample(data_pooled, refresh = 0, seed = 03091900)
 ```
 
-### Hierarchical model
+## Hierarchical model
+
+In Hierarchical model, students have been divided in four different groups: white males, white females, non white males, and non white females. All students in all the groups have own parameters $\alpha$s and $\beta$s which are constructed using common hyperparameters for all the different groups.
 
 **Mathematical notation**
 
@@ -123,7 +130,13 @@ writeLines(readLines("hierarchical.stan"))
 
 **Running the model
 
-```{r}
+
+```{r data_hierarchical, warning=FALSE, message=FALSE}
+male_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==1,]
+male_non_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==0,]
+female_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==1,]
+female_non_white <- FirstYearGPA[FirstYearGPA$Male==0 & FirstYearGPA$White==0,]
+
 data_hierarchical <- list(N1 = nrow(male_white),
                             N2 = nrow(male_non_white),
                             N3 = nrow(female_white),
@@ -140,7 +153,7 @@ data_hierarchical <- list(N1 = nrow(male_white),
                             sigmasigma = 10)
 ```
 
-```{r}
+```{r hierarchical_model_fit}
 mod_hierarchical <- cmdstan_model("hierarchical.stan")
 fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 0,
                                            seed = 03091900)
@@ -158,13 +171,13 @@ As can be seen from the above code lines, default values were used for running t
 
 ### Pooled model
 
-```{r}
+```{r pooled_rhat}
 summary_pooled <- fit_pooled$summary()
 sum(summary_pooled$rhat > 1.01)
 sum(summary_pooled$rhat < 0.99)
 ```
 
-```{r}
+```{r pooled_ess}
 mean(fit_pooled$summary()$ess_tail)
 sum(fit_pooled$summary()$ess_tail<400)
 mean(fit_pooled$summary()$ess_bulk)
@@ -175,13 +188,13 @@ None of the $\hat{R}$-values for the pooled model exceeds 1.01 which indicates t
 
 ### Hierarchical model
 
-```{r}
+```{r hierarchical_rhat}
 sum(fit_hierarchical$summary()$rhat > 1.01)
 sum(fit_hierarchical$summary()$rhat < 0.99)
 ```
 
 
-```{r}
+```{r hierarchical_ess}
 mean(fit_hierarchical$summary()$ess_tail)
 sum(fit_hierarchical$summary()$ess_tail<400)
 mean(fit_hierarchical$summary()$ess_bulk)
@@ -193,53 +206,60 @@ For the hierarchical model a few $\hat{R}$-values exceed 1.01 and a few ESS-valu
 
 ## Posterior predictive checks
 
+48 histograms of replications of the data (created based on the posterior predictive distributions) are shown for all the models. In addition, there is over layed distributions and empirical cumulative distribution (ecdf) functions of 100 replications in the two with the original distribution and ecdf. These different plots of replication are compared to the plots of the original data to investigate, how good predictions fitted model can make. The closer the replications are original data, the better the predictions are.
+
 ### Pooled model
 
-```{r}
+```{r pooled_posterior, fig.height=7.2}
 y <- FirstYearGPA$GPA
 ypred <- fit_pooled$draws("ypred", format = "matrix")
 
-ppc_hist(y, ypred[1:48,])
-ppc_dens_overlay(y, ypred[1:100,])
-ppc_ecdf_overlay(y, ypred[1:100,])
+grid.arrange( ppc_hist(y, ypred[1:48,]),
+              ppc_dens_overlay(y, ypred[1:100,]), 
+              ppc_ecdf_overlay(y, ypred[1:100,]),
+              layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
 ### Hierarchical model
 
-```{r}
+```{r hierarchical_posterior1, fig.height=7.2}
 y1 <- data_hierarchical$y1
 ypred1 <- fit_hierarchical$draws("ypred1", format = "matrix")
 
-ppc_hist(y1, ypred1[1:48,])
-ppc_dens_overlay(y1, ypred1[1:100,])
-ppc_ecdf_overlay(y1, ypred1[1:100,])
+grid.arrange(ppc_hist(y1, ypred1[1:48,]),
+ppc_dens_overlay(y1, ypred1[1:100,]),
+ppc_ecdf_overlay(y1, ypred1[1:100,]),
+              layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r}
+```{r hierarchical_posterior2, fig.height=7.2}
 y2 <- data_hierarchical$y2
 ypred2 <- fit_hierarchical$draws("ypred2", format = "matrix")
 
-ppc_hist(y2, ypred2[1:48,])
-ppc_dens_overlay(y2, ypred2[1:100,])
-ppc_ecdf_overlay(y2, ypred2[1:100,])
+grid.arrange(ppc_hist(y2, ypred2[1:48,]),
+ppc_dens_overlay(y2, ypred2[1:100,]),
+ppc_ecdf_overlay(y2, ypred2[1:100,]),
+              layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r}
+```{r hierarchical_posterior3, fig.height=7.2}
 y3 <- data_hierarchical$y3
 ypred3 <- fit_hierarchical$draws("ypred3", format = "matrix")
 
-ppc_hist(y3, ypred3[1:48,])
-ppc_dens_overlay(y3, ypred3[1:100,])
-ppc_ecdf_overlay(y3, ypred3[1:100,])
+grid.arrange(ppc_hist(y3, ypred3[1:48,]),
+ppc_dens_overlay(y3, ypred3[1:100,]),
+ppc_ecdf_overlay(y3, ypred3[1:100,]),
+              layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r}
+```{r hierarchical_posterior4, fig.height=7.2}
 y4 <- data_hierarchical$y4
 ypred4 <- fit_hierarchical$draws("ypred4", format = "matrix")
 
-ppc_hist(y4, ypred4[1:48,])
-ppc_dens_overlay(y4, ypred4[1:100,])
-ppc_ecdf_overlay(y4, ypred4[1:100,])
+grid.arrange(ppc_hist(y4, ypred4[1:48,]),
+ppc_dens_overlay(y4, ypred4[1:100,]),
+ppc_ecdf_overlay(y4, ypred4[1:100,]),
+              layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
 ## Prior sensitivity analysis
@@ -260,6 +280,7 @@ Normal (0,100) + Normal (0,1)
 ### Pooled model
 
 ```{r}
+<<<<<<< Updated upstream
 musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
 sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
 mus_pooled <- matrix(nrow = 6, ncol = length(musigmas))
@@ -288,6 +309,36 @@ dimnames(sigmas_pooled) <- dimnames
 
 as.data.frame(mus_pooled)
 as.data.frame(sigmas_pooled)
+=======
+# musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
+# sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
+# mus <- matrix(nrow = 6, ncol = length(musigmas))
+# sigmas <- matrix(nrow = 6, ncol = length(musigmas))
+# 
+# for (i in 1:length(musigmas)) {
+#   data_pooled_sens <- list(N = nrow(FirstYearGPA),
+#                          x = subset(FirstYearGPA, select = c('HSGPA', 'SATV',
+#                                                              'SATM','HU','SS')),
+#                          y = FirstYearGPA$GPA,
+#                          musigma = musigmas[i],
+#                          sigmasigma = sigmasigmas[i])
+#   fit_pooled_sens <- mod_pooled$sample(data_pooled, refresh = 0,
+#                                        seed = 03091900)
+#   summary_sens <- fit_pooled_sens$summary()
+#   mus[,i] <- summary_sens$mean[2:7]
+#   sigmas[,i] <- summary_sens$sd[2:7]
+# }
+```
+
+```{r}
+# dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
+#                  c("1", "2", "3", "4", "5", "6", "7", "8"))
+# dimnames(mus) <- dimnames
+# dimnames(sigmas) <- dimnames
+# 
+# as.data.frame(mus)
+# as.data.frame(sigmas)
+>>>>>>> Stashed changes
 ```
 
 Regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are the same. Therefore our pooled model is not sensitive to changes in the priors, as long as wide enough ones are utilised.
@@ -295,20 +346,21 @@ Regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are the
 Posteriors plotted:
 
 ```{r}
-par(mfrow = c(3,2))
-x <- seq(-2, 2, length = 1000)
-y <- dnorm(x, mean = summary_pooled$mean[2], sd = summary_pooled$sd[2])
-plot(x, y, type = "l", xlab = "alpha")
-for (i in 1:5) {
-  x <- seq(-1, 1, length = 1000)
-  y <- dnorm(x, mean = summary_pooled$mean[2+i], sd = summary_pooled$sd[2+i])
-  plot(x, y, type = "l", xlab = paste0("beta", i))
-}
+# par(mfrow = c(3,2))
+# x <- seq(-2, 2, length = 1000)
+# y <- dnorm(x, mean = summary_pooled$mean[2], sd = summary_pooled$sd[2])
+# plot(x, y, type = "l", xlab = "alpha")
+# for (i in 1:5) {
+#   x <- seq(-1, 1, length = 1000)
+#   y <- dnorm(x, mean = summary_pooled$mean[2+i], sd = summary_pooled$sd[2+i])
+#   plot(x, y, type = "l", xlab = paste0("beta", i))
+# }
 ```
 
 ### Hierarchical model
 
 ```{r}
+<<<<<<< Updated upstream
 musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
 sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
 mus_hierarchical <- matrix(nrow = 24, ncol = length(musigmas))
@@ -350,64 +402,106 @@ dimnames(sigmas_hierarchical) <- dimnames
 
 as.data.frame(mus_hierarchical)
 as.data.frame(sigmas_hierarchical)
+=======
+# musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
+# sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
+# mus <- matrix(nrow = 24, ncol = length(musigmas))
+# sigmas <- matrix(nrow = 24, ncol = length(musigmas))
+# 
+# for (i in 1:length(musigmas)) {
+#   data_hierarchical_sens <- list(N1 = nrow(male_white),
+#                                  N2 = nrow(male_non_white),
+#                                  N3 = nrow(female_white),
+#                                  N4 = nrow(female_non_white),
+#                                  x1 = subset(male_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+#                                  x2 = subset(male_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+#                                  x3 = subset(female_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+#                                  x4 = subset(female_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+#                                  y1 = male_white$GPA,
+#                                  y2 = male_non_white$GPA,
+#                                  y3 = female_white$GPA,
+#                                  y4 = female_non_white$GPA,
+#                                  musigma = musigmas[i],
+#                                  sigmasigma = sigmasigmas[i])
+#   fit_hierarchical_sens <- mod_hierarchical$sample(data_hierarchical_sens, refresh = 0,
+#                                                    seed = 03091900)
+#   summary_sens <- fit_hierarchical_sens$summary()
+#   mus[,i] <- summary_sens$mean[2:25]
+#   sigmas[,i] <- summary_sens$sd[2:25]
+# }
 ```
 
 ```{r}
-# Each group's parameters get its own plots (4 3x2 plots in total)
-for (i in 1:4) {
-  par(mfrow = c(3,2))
-  x <- seq(-2, 2, length = 1000)
-  y <- dnorm(x, mean = summary_hierarchical$mean[1+i], sd = summary_hierarchical$sd[1+i])
-  plot(x, y, type = "l", xlab = "alpha")
-  for (j in 1:5) {
-    x <- seq(-1, 1, length = 1000)
-    y <- dnorm(x, mean = summary_hierarchical$mean[5+(i-1)*5+j], sd = summary_hierarchical$sd[5+(i-1)*5+j])
-    plot(x, y, type = "l", xlab = paste0("beta", i))
-  }
-}
+# dimnames <- list(c("alpha1", "alpha2", "alpha3", "alpha4",
+#                    "beta1_1", "beta2_1", "beta3_1", "beta4_1", "beta5_1",
+#                    "beta1_2", "beta2_2", "beta3_2", "beta4_2", "beta5_2",
+#                    "beta1_3", "beta2_3", "beta3_3", "beta4_3", "beta5_3",
+#                    "beta1_4", "beta2_4", "beta3_4", "beta4_4", "beta5_4"),
+#                  c("1", "2", "3", "4", "5", "6", "7", "8"))
+# dimnames(mus) <- dimnames
+# dimnames(sigmas) <- dimnames
+# 
+# as.data.frame(mus)
+# as.data.frame(sigmas)
+>>>>>>> Stashed changes
+```
+
+```{r}
+# # Each group's parameters get its own plots (4 3x2 plots in total)
+# for (i in 1:4) {
+#   par(mfrow = c(3,2))
+#   x <- seq(-2, 2, length = 1000)
+#   y <- dnorm(x, mean = summary_hierarchical$mean[1+i], sd = summary_hierarchical$sd[1+i])
+#   plot(x, y, type = "l", xlab = "alpha")
+#   for (j in 1:5) {
+#     x <- seq(-1, 1, length = 1000)
+#     y <- dnorm(x, mean = summary_hierarchical$mean[5+(i-1)*5+j], sd = summary_hierarchical$sd[5+(i-1)*5+j])
+#     plot(x, y, type = "l", xlab = paste0("beta", i))
+#   }
+# }
 ```
 
 ## Model comparison
 
 ```{r}
-dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
-                 c("pooled", "h. group 1", "h. group 2",
-                   "h. group 3", "h. group 4"))
-post_table <- matrix(nrow = 6, ncol = 5, dimnames = dimnames)
-
-# Fill 1st column
-for (i in 1:6) {
-  mean <- summary_pooled$mean[1+i]
-  sd <- summary_pooled$sd[1+i]
-  post_table[i,1] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
-}
-# Fill other columns
-# first alphas
-for (i in 1:4) {
-  mean <- summary_hierarchical$mean[1+i]
-  sd <- summary_hierarchical$sd[1+i]
-  post_table[1, 1+i] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
-}
-# then betas
-for (i in 1:4) {
-  for(j in 1:5) {
-    mean <- summary_hierarchical$mean[5+(i-1)*5+j]
-    sd <- summary_hierarchical$sd[5+(i-1)*5+j]
-    post_table[j+1,i+1] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
-  }
-}
-
-as.data.frame(post_table)
+# dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
+#                  c("pooled", "h. group 1", "h. group 2",
+#                    "h. group 3", "h. group 4"))
+# post_table <- matrix(nrow = 6, ncol = 5, dimnames = dimnames)
+# 
+# # Fill 1st column
+# for (i in 1:6) {
+#   mean <- summary_pooled$mean[1+i]
+#   sd <- summary_pooled$sd[1+i]
+#   post_table[i,1] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
+# }
+# # Fill other columns
+# # first alphas
+# for (i in 1:4) {
+#   mean <- summary_hierarchical$mean[1+i]
+#   sd <- summary_hierarchical$sd[1+i]
+#   post_table[1, 1+i] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
+# }
+# # then betas
+# for (i in 1:4) {
+#   for(j in 1:5) {
+#     mean <- summary_hierarchical$mean[5+(i-1)*5+j]
+#     sd <- summary_hierarchical$sd[5+(i-1)*5+j]
+#     post_table[j+1,i+1] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
+#   }
+# }
+# 
+# as.data.frame(post_table)
 ```
 
 ```{r}
-log_lik_pooled <- fit_pooled$draws("log_lik", format = "matrix")
-log_lik_hierarchical <- fit_hierarchical$draws("log_lik", format = "matrix")
-
-loo_pooled <- loo(log_lik_pooled)
-loo_hierarchical <- loo(log_lik_hierarchical)
-
-loo_compare(list("pooled" = loo_pooled, "hierarchical" = loo_hierarchical))
+# log_lik_pooled <- fit_pooled$draws("log_lik", format = "matrix")
+# log_lik_hierarchical <- fit_hierarchical$draws("log_lik", format = "matrix")
+# 
+# loo_pooled <- loo(log_lik_pooled)
+# loo_hierarchical <- loo(log_lik_hierarchical)
+# 
+# loo_compare(list("pooled" = loo_pooled, "hierarchical" = loo_hierarchical))
 ```
 
 \newpage
