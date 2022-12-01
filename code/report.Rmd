@@ -262,8 +262,8 @@ Normal (0,100) + Normal (0,1)
 ```{r}
 musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
 sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
-mus <- matrix(nrow = 6, ncol = length(musigmas))
-sigmas <- matrix(nrow = 6, ncol = length(musigmas))
+mus_pooled <- matrix(nrow = 6, ncol = length(musigmas))
+sigmas_pooled <- matrix(nrow = 6, ncol = length(musigmas))
 
 for (i in 1:length(musigmas)) {
   data_pooled_sens <- list(N = nrow(FirstYearGPA),
@@ -272,22 +272,22 @@ for (i in 1:length(musigmas)) {
                          y = FirstYearGPA$GPA,
                          musigma = musigmas[i],
                          sigmasigma = sigmasigmas[i])
-  fit_pooled_sens <- mod_pooled$sample(data_pooled, refresh = 0,
+  fit_pooled_sens <- mod_pooled$sample(data_pooled_sens, refresh = 0,
                                        seed = 03091900)
   summary_sens <- fit_pooled_sens$summary()
-  mus[,i] <- summary_sens$mean[2:7]
-  sigmas[,i] <- summary_sens$sd[2:7]
+  mus_pooled[,i] <- summary_sens$mean[2:7]
+  sigmas_pooled[,i] <- summary_sens$sd[2:7]
 }
 ```
 
 ```{r}
 dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
                  c("1", "2", "3", "4", "5", "6", "7", "8"))
-dimnames(mus) <- dimnames
-dimnames(sigmas) <- dimnames
+dimnames(mus_pooled) <- dimnames
+dimnames(sigmas_pooled) <- dimnames
 
-as.data.frame(mus)
-as.data.frame(sigmas)
+as.data.frame(mus_pooled)
+as.data.frame(sigmas_pooled)
 ```
 
 Regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are the same. Therefore our pooled model is not sensitive to changes in the priors, as long as wide enough ones are utilised.
@@ -311,8 +311,8 @@ for (i in 1:5) {
 ```{r}
 musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
 sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
-mus <- matrix(nrow = 24, ncol = length(musigmas))
-sigmas <- matrix(nrow = 24, ncol = length(musigmas))
+mus_hierarchical <- matrix(nrow = 24, ncol = length(musigmas))
+sigmas_hierarchical <- matrix(nrow = 24, ncol = length(musigmas))
 
 for (i in 1:length(musigmas)) {
   data_hierarchical_sens <- list(N1 = nrow(male_white),
@@ -329,11 +329,12 @@ for (i in 1:length(musigmas)) {
                                  y4 = female_non_white$GPA,
                                  musigma = musigmas[i],
                                  sigmasigma = sigmasigmas[i])
-  fit_hierarchical_sens <- mod_hierarchical$sample(data_pooled, refresh = 0,
+  fit_hierarchical_sens <- mod_hierarchical$sample(data_hierarchical_sens,
+                                                   refresh = 0,
                                                    seed = 03091900)
   summary_sens <- fit_hierarchical_sens$summary()
-  mus[,i] <- summary_sens$mean[2:25]
-  sigmas[,i] <- summary_sens$sd[2:25]
+  mus_hierarchical[,i] <- summary_sens$mean[2:25]
+  sigmas_hierarchical[,i] <- summary_sens$sd[2:25]
 }
 ```
 
@@ -344,11 +345,11 @@ dimnames <- list(c("alpha1", "alpha2", "alpha3", "alpha4",
                    "beta1_3", "beta2_3", "beta3_3", "beta4_3", "beta5_3",
                    "beta1_4", "beta2_4", "beta3_4", "beta4_4", "beta5_4"),
                  c("1", "2", "3", "4", "5", "6", "7", "8"))
-dimnames(mus) <- dimnames
-dimnames(sigmas) <- dimnames
+dimnames(mus_hierarchical) <- dimnames
+dimnames(sigmas_hierarchical) <- dimnames
 
-as.data.frame(mus)
-as.data.frame(sigmas)
+as.data.frame(mus_hierarchical)
+as.data.frame(sigmas_hierarchical)
 ```
 
 ```{r}
