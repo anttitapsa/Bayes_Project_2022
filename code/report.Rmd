@@ -84,7 +84,6 @@ writeLines(readLines("pooled.stan"))
 
 **Running the model**
 
-
 ```{r data_pooled, warning=FALSE, message=FALSE}
 data_pooled <- list(N = nrow(FirstYearGPA),
                     x = subset(FirstYearGPA, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
@@ -128,8 +127,7 @@ $$
 writeLines(readLines("hierarchical.stan"))
 ```
 
-**Running the model
-
+**Running the model**
 
 ```{r data_hierarchical, warning=FALSE, message=FALSE}
 male_white <- FirstYearGPA[FirstYearGPA$Male==1 & FirstYearGPA$White==1,]
@@ -262,28 +260,35 @@ ppc_ecdf_overlay(y4, ypred4[1:100,]),
               layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
+
 ## Prior sensitivity analysis
 
-Original priors:
-Normal(0, 100) + Normal(0, 10)
+The original priors utilised were N$(0,100)$ for $\alpha$ and $\beta$ or their means, and N$(0,10)$ for all standard deviations. For prior sensitivity analysis, the priors presented in the table below were tested to see how much the posteriors of $\alpha$ and $\beta_k$ would differ from the original. Altogether, 8 prior combinations were tested, including the original priors for reference. The same prior combinations were used for testing both models. Narrower priors, e.g. N$(0,0.1)$, were excluded from the analysis, as they would not be weakly informative anymore.
 
-Priors to test:
-Normal(0, 1000) + Normal(0,10)
-Normal(0, 50) + Normal(0,10)
-Normal(0, 10) + Normal(0,10)
-Normal(0, 1) + Normal(0,10)
-  and vice versa
-Normal (0,100) + Normal (0,100)
-Normal (0,100) + Normal (0,50)
-Normal (0,100) + Normal (0,1)
+```{r, echo=FALSE}
+musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
+sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
+
+dimnames <- list(c("alpha, beta OR mu_alpha, mu_beta", "sigma, sigma_alpha, sigma_beta"),
+                 c("1", "2", "3", "4", "5", "6", "7", "8"))
+prior_table <- matrix(nrow = 2, ncol = length(musigmas), dimnames = dimnames)
+
+for (i in 1:length(musigmas)) {
+  prior_table[1, i] <- paste0("N(0,", musigmas[i], ")")
+  prior_table[2, i] <- paste0("N(0,", sigmasigmas[i], ")")
+}
+
+as.data.frame(prior_table)
+```
 
 ### Pooled model
 
-```{r}
-musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
-sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
-mus_pooled <- matrix(nrow = 6, ncol = length(musigmas))
-sigmas_pooled <- matrix(nrow = 6, ncol = length(musigmas))
+```{r, echo=FALSE}
+# Takes ages to run, beware!
+dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
+                 c("1", "2", "3", "4", "5", "6", "7", "8"))
+mus_pooled <- matrix(nrow = 6, ncol = length(musigmas), dimnames = dimnames)
+sigmas_pooled <- matrix(nrow = 6, ncol = length(musigmas), dimnames = dimnames)
 
 for (i in 1:length(musigmas)) {
   data_pooled_sens <- list(N = nrow(FirstYearGPA),
@@ -300,39 +305,27 @@ for (i in 1:length(musigmas)) {
 }
 ```
 
-```{r}
-dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
-                 c("1", "2", "3", "4", "5", "6", "7", "8"))
-dimnames(mus_pooled) <- dimnames
-dimnames(sigmas_pooled) <- dimnames
-
+```{r, echo=FALSE}
+print("Posterior means")
 as.data.frame(mus_pooled)
+print("Posterior SDs")
 as.data.frame(sigmas_pooled)
 ```
 
-Regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are the same. Therefore our pooled model is not sensitive to changes in the priors, as long as wide enough ones are utilised.
-
-Posteriors plotted:
-
-```{r}
-par(mfrow = c(3,2))
-x <- seq(-2, 2, length = 1000)
-y <- dnorm(x, mean = summary_pooled$mean[2], sd = summary_pooled$sd[2])
-plot(x, y, type = "l", xlab = "alpha")
-for (i in 1:5) {
-  x <- seq(-1, 1, length = 1000)
-  y <- dnorm(x, mean = summary_pooled$mean[2+i], sd = summary_pooled$sd[2+i])
-  plot(x, y, type = "l", xlab = paste0("beta", i))
-}
-```
+The above results show that regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are very similar to each other. Therefore it can be concluded that the pooled model is not sensitive to changes in the priors.
 
 ### Hierarchical model
 
-```{r}
-musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
-sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
-mus_hierarchical <- matrix(nrow = 24, ncol = length(musigmas))
-sigmas_hierarchical <- matrix(nrow = 24, ncol = length(musigmas))
+```{r, echo=FALSE}
+# Takes ages to run, beware!
+dimnames <- list(c("alpha1", "alpha2", "alpha3", "alpha4",
+                   "beta1_1", "beta2_1", "beta3_1", "beta4_1", "beta5_1",
+                   "beta1_2", "beta2_2", "beta3_2", "beta4_2", "beta5_2",
+                   "beta1_3", "beta2_3", "beta3_3", "beta4_3", "beta5_3",
+                   "beta1_4", "beta2_4", "beta3_4", "beta4_4", "beta5_4"),
+                 c("1", "2", "3", "4", "5", "6", "7", "8"))
+mus_hierarchical <- matrix(nrow = 24, ncol = length(musigmas), dimnames = dimnames)
+sigmas_hierarchical <- matrix(nrow = 24, ncol = length(musigmas), dimnames = dimnames)
 
 for (i in 1:length(musigmas)) {
   data_hierarchical_sens <- list(N1 = nrow(male_white),
@@ -358,38 +351,21 @@ for (i in 1:length(musigmas)) {
 }
 ```
 
-```{r}
-dimnames <- list(c("alpha1", "alpha2", "alpha3", "alpha4",
-                   "beta1_1", "beta2_1", "beta3_1", "beta4_1", "beta5_1",
-                   "beta1_2", "beta2_2", "beta3_2", "beta4_2", "beta5_2",
-                   "beta1_3", "beta2_3", "beta3_3", "beta4_3", "beta5_3",
-                   "beta1_4", "beta2_4", "beta3_4", "beta4_4", "beta5_4"),
-                 c("1", "2", "3", "4", "5", "6", "7", "8"))
-dimnames(mus_hierarchical) <- dimnames
-dimnames(sigmas_hierarchical) <- dimnames
-
+```{r, echo=FALSE}
+print("Posterior means")
 as.data.frame(mus_hierarchical)
+print("Posterior SDs")
 as.data.frame(sigmas_hierarchical)
 ```
 
-```{r}
-# Each group's parameters get its own plots (4 3x2 plots in total)
-for (i in 1:4) {
-  par(mfrow = c(3,2))
-  x <- seq(-2, 2, length = 1000)
-  y <- dnorm(x, mean = summary_hierarchical$mean[1+i], sd = summary_hierarchical$sd[1+i])
-  plot(x, y, type = "l", xlab = "alpha")
-  for (j in 1:5) {
-    x <- seq(-1, 1, length = 1000)
-    y <- dnorm(x, mean = summary_hierarchical$mean[5+(i-1)*5+j], sd = summary_hierarchical$sd[5+(i-1)*5+j])
-    plot(x, y, type = "l", xlab = paste0("beta", i))
-  }
-}
-```
+There is slightly more variation in the posteriors of the hierarchical model when various priors are utilised, but the posteriors look quite similar nonetheless. It can be concluded that the hierarchical model, similarly to the pooled model, is not sensitive to changes in the priors.
 
-## Model comparison
 
-```{r}
+## Posterior distributions
+
+Next, let us inspect and visualise the posterior distributions of $\alpha$ and $\beta_k$. The table below contains the posterior distributions of the six variables for the pooled model and all 4 groups of the hierarchical model separately.
+
+```{r, echo=FALSE}
 dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
                  c("pooled", "h. group 1", "h. group 2",
                    "h. group 3", "h. group 4"))
@@ -420,6 +396,48 @@ for (i in 1:4) {
 as.data.frame(post_table)
 ```
 
+Let us also plot the posterior distributions.
+
+### Hierarchical model
+
+```{r, echo=FALSE}
+par(mfrow = c(3,2))
+x <- seq(-2, 2, length = 1000)
+y <- dnorm(x, mean = summary_pooled$mean[2], sd = summary_pooled$sd[2])
+plot(x, y, type = "l", xlab = "alpha")
+for (i in 1:5) {
+  x <- seq(-1, 1, length = 1000)
+  y <- dnorm(x, mean = summary_pooled$mean[2+i], sd = summary_pooled$sd[2+i])
+  plot(x, y, type = "l", xlab = paste0("beta", i))
+}
+```
+
+The plot shows that the slope parameter $\beta_1$, multiplying the variable for high school GPA, likely differs from 0 and has the most effect on college GPA, our target variable. The other $\beta$s have very narrow distributions close to 0, though, implying their effect on college GPA is very small or non-existent.
+
+### Hierarchical model
+
+```{r, echo=FALSE}
+# Each group's parameters get its own plots (4 3x2 plots in total)
+for (i in 1:4) {
+  par(mfrow = c(3,2))
+  x <- seq(-2, 2, length = 1000)
+  y <- dnorm(x, mean = summary_hierarchical$mean[1+i], sd = summary_hierarchical$sd[1+i])
+  plot(x, y, type = "l", xlab = "alpha")
+  for (j in 1:5) {
+    x <- seq(-1, 1, length = 1000)
+    y <- dnorm(x, mean = summary_hierarchical$mean[5+(i-1)*5+j], sd = summary_hierarchical$sd[5+(i-1)*5+j])
+    plot(x, y, type = "l", xlab = paste0("beta", j))
+  }
+}
+```
+
+The posteriors of the hierarchical model are quite similar to the pooled model. The intercept terms $\alpha$ of groups 1 and 3, and of groups 2 and 4, are very similar to each other, implying that the ethnicity of the student governs the intercept term $\alpha$. Furthermore, there is slight variation in the slope terms $\beta_k$, especially $\beta_5$: for groups with less data, the distributions are narrower, and for groups with more data, wider.
+
+
+## Model comparison
+
+The log likelihoods of the data have been calculated in the "generated quantities" blocks of the models. They are given to the "loo" function of the "loo" package, and the individual results and model comparison are printed.
+
 ```{r}
 log_lik_pooled <- fit_pooled$draws("log_lik", format = "matrix")
 log_lik_hierarchical <- fit_hierarchical$draws("log_lik", format = "matrix")
@@ -431,6 +449,10 @@ loo_pooled
 loo_hierarchical
 loo_compare(list("pooled" = loo_pooled, "hierarchical" = loo_hierarchical))
 ```
+
+The results show that the PSIS-LOO estimate for the pooled model can be considered reliable, as all values $\hat{k} \lesssim 0.7$. The same cannot be said of the hierarchical model, and the PSIS-LOO estimate for it should be considered, or at least suspected, biased and overly optimistic.
+
+Comparing the two models reveals that the pooled model seems to fit to the data  better than the hierarchical model (likely due to the lack of training data for the latter one). Therefore for any future predictions, the pooled model should be utilised.
 
 \newpage
 
