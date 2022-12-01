@@ -434,16 +434,24 @@ loo_compare(list("pooled" = loo_pooled, "hierarchical" = loo_hierarchical))
 
 \newpage
 
-# Discussion
+# Discussion about problems and improvements
+
+The overall problem in the project was that there was not enough data. For example in hierarchical model, some of the data groups were quite small: th group of non white groups only contained 18 and 28 data, and the rest of the 173 data points were distributed between white groups. In addition, there was big variation in the magnitudes of the variables (HSGPA etc.). This could have been solved by using normalisation.
+
+There were divergences in the hierarchical model. If there was more time, the divergences could have been solved by analysing more the running of the model; The default values (the number of the chains, the number of the iterations etc.) were utilised during the model fitting. Furthermore, testing out different priors to solve the divergence issue.
 
 \newpage
 
 # Conclusion
 
+Based on the analysis, the pooled model describes the data better than the hierarchical model. However, both models performed well. The hierarchical model describes the white and non white students differently. So according to the hierarchical model, there were more differences between white and non-white students than between male and female students. This can be seen most clearly from the posterior distributions of the $\alpha$s.   
+
 \newpage
 
 # Self-reflection
 
+During the project, we noticed that finding the data is difficult and time consuming. Moreover, the pre-processing of the data and deciding the suitable data groups for the hierarchical model was surprisingly time consuming. We also noticed the importance of the amount of the data: more data, better model.
 
+We learned to make more complicated stan models.  
 
 
