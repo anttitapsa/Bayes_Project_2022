@@ -13,7 +13,9 @@ output:
 
 # Introduction
 
-Can the grade point averages (GPAs) of first-year college students be predicted based on high school GPA and other factors. This report presents a solution for this problem by applying two statiscal models to predict the first-year college GPA. The models are constracted and compared according to Bayesian data analysis concepts.
+Can the grade point averages (GPAs) of first-year college students be predicted based on high school GPAs, SAT scores and other factors? This report presents a solution to this problem by applying two statistical models to predict the first-year college GPA. These models are fitted in Stan and compared according to Bayesian data analysis concepts. 
+
+The report begins with a description of the data and the problem. After this, the models are introduced and their performances are analysed. Model improvements are then discussed and conclusions are made. Finally, self-reflection of the project is presented.
 
 ```{r libraries, warning=FALSE, message=FALSE}
 library(cmdstanr)
@@ -29,8 +31,6 @@ data("FirstYearGPA")
 
 # Data and Problem 
 
-Description of the data and the analysis problem. Provide information where the data was obtained, 
-
 The data contains information from a sample of 219 first year students at a midwestern college in 1996. The data has 10 variables:
 
 ```
@@ -45,7 +45,9 @@ FirstGen      1= student is the first in her or his family to attend college, 0=
 White         1= white students, 0= others
 CollegeBound  1=attended a high school where >=50% students intended to go on to college, 0=otherwise
 ```
-The data can be obtained from \url{https://vincentarelbundock.github.io/Rdatasets/doc/Stat2Data/FirstYearGPA.html}. Our models use all numerical values (HSGPA, SATV, SATM, HU and SS) to predict the first-year college GPA (GPA). In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors.
+The data can be obtained from: https://vincentarelbundock.github.io/Rdatasets/doc/Stat2Data/FirstYearGPA.html 
+
+This report solves the problem of predicting the GPA of first-year college students using this data. Our models use all numerical values (HSGPA, SATV, SATM, HU and SS) to predict the first-year college GPA (GPA). In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors. The barplot below represents these four groups and their sizes.
 
 ```{r data_barplot}
 counts <- table(White=FirstYearGPA$White, Male=FirstYearGPA$Male)
