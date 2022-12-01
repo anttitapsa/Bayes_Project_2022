@@ -203,7 +203,7 @@ mean(summary_hierarchical$ess_bulk)
 sum(summary_hierarchical$ess_bulk<400)
 ```
 
-For the hierarchical model a few $\hat{R}$-values exceed 1.01 and a few ESS-values are below 400. The model gives divergence of approximately 5%. These facts can indicate that there might be some problems with the convergence. On the other hand, these values do not differ significantly from the desired values the probability of having problems with convergence is small.
+Similarly to the pooled model, in the hierarchical model, no $\hat{R}$-values exceed 1.01, indicating that convergence is not a problem. A few ESS values are below 400 and the model gives a divergence of approximately 5%. These facts can indicate that there might be some problems with the convergence. On the other hand, these values do not differ significantly from the desired values the probability of having problems with convergence is small.
 
 
 ## Posterior predictive checks
