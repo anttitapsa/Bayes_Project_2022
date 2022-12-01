@@ -280,7 +280,6 @@ Normal (0,100) + Normal (0,1)
 ### Pooled model
 
 ```{r}
-<<<<<<< Updated upstream
 musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
 sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
 mus_pooled <- matrix(nrow = 6, ncol = length(musigmas))
@@ -309,36 +308,6 @@ dimnames(sigmas_pooled) <- dimnames
 
 as.data.frame(mus_pooled)
 as.data.frame(sigmas_pooled)
-=======
-# musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
-# sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
-# mus <- matrix(nrow = 6, ncol = length(musigmas))
-# sigmas <- matrix(nrow = 6, ncol = length(musigmas))
-# 
-# for (i in 1:length(musigmas)) {
-#   data_pooled_sens <- list(N = nrow(FirstYearGPA),
-#                          x = subset(FirstYearGPA, select = c('HSGPA', 'SATV',
-#                                                              'SATM','HU','SS')),
-#                          y = FirstYearGPA$GPA,
-#                          musigma = musigmas[i],
-#                          sigmasigma = sigmasigmas[i])
-#   fit_pooled_sens <- mod_pooled$sample(data_pooled, refresh = 0,
-#                                        seed = 03091900)
-#   summary_sens <- fit_pooled_sens$summary()
-#   mus[,i] <- summary_sens$mean[2:7]
-#   sigmas[,i] <- summary_sens$sd[2:7]
-# }
-```
-
-```{r}
-# dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
-#                  c("1", "2", "3", "4", "5", "6", "7", "8"))
-# dimnames(mus) <- dimnames
-# dimnames(sigmas) <- dimnames
-# 
-# as.data.frame(mus)
-# as.data.frame(sigmas)
->>>>>>> Stashed changes
 ```
 
 Regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are the same. Therefore our pooled model is not sensitive to changes in the priors, as long as wide enough ones are utilised.
@@ -346,21 +315,20 @@ Regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are the
 Posteriors plotted:
 
 ```{r}
-# par(mfrow = c(3,2))
-# x <- seq(-2, 2, length = 1000)
-# y <- dnorm(x, mean = summary_pooled$mean[2], sd = summary_pooled$sd[2])
-# plot(x, y, type = "l", xlab = "alpha")
-# for (i in 1:5) {
-#   x <- seq(-1, 1, length = 1000)
-#   y <- dnorm(x, mean = summary_pooled$mean[2+i], sd = summary_pooled$sd[2+i])
-#   plot(x, y, type = "l", xlab = paste0("beta", i))
-# }
+par(mfrow = c(3,2))
+x <- seq(-2, 2, length = 1000)
+y <- dnorm(x, mean = summary_pooled$mean[2], sd = summary_pooled$sd[2])
+plot(x, y, type = "l", xlab = "alpha")
+for (i in 1:5) {
+  x <- seq(-1, 1, length = 1000)
+  y <- dnorm(x, mean = summary_pooled$mean[2+i], sd = summary_pooled$sd[2+i])
+  plot(x, y, type = "l", xlab = paste0("beta", i))
+}
 ```
 
 ### Hierarchical model
 
 ```{r}
-<<<<<<< Updated upstream
 musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
 sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
 mus_hierarchical <- matrix(nrow = 24, ncol = length(musigmas))
@@ -402,106 +370,64 @@ dimnames(sigmas_hierarchical) <- dimnames
 
 as.data.frame(mus_hierarchical)
 as.data.frame(sigmas_hierarchical)
-=======
-# musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
-# sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
-# mus <- matrix(nrow = 24, ncol = length(musigmas))
-# sigmas <- matrix(nrow = 24, ncol = length(musigmas))
-# 
-# for (i in 1:length(musigmas)) {
-#   data_hierarchical_sens <- list(N1 = nrow(male_white),
-#                                  N2 = nrow(male_non_white),
-#                                  N3 = nrow(female_white),
-#                                  N4 = nrow(female_non_white),
-#                                  x1 = subset(male_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-#                                  x2 = subset(male_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-#                                  x3 = subset(female_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-#                                  x4 = subset(female_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-#                                  y1 = male_white$GPA,
-#                                  y2 = male_non_white$GPA,
-#                                  y3 = female_white$GPA,
-#                                  y4 = female_non_white$GPA,
-#                                  musigma = musigmas[i],
-#                                  sigmasigma = sigmasigmas[i])
-#   fit_hierarchical_sens <- mod_hierarchical$sample(data_hierarchical_sens, refresh = 0,
-#                                                    seed = 03091900)
-#   summary_sens <- fit_hierarchical_sens$summary()
-#   mus[,i] <- summary_sens$mean[2:25]
-#   sigmas[,i] <- summary_sens$sd[2:25]
-# }
 ```
 
 ```{r}
-# dimnames <- list(c("alpha1", "alpha2", "alpha3", "alpha4",
-#                    "beta1_1", "beta2_1", "beta3_1", "beta4_1", "beta5_1",
-#                    "beta1_2", "beta2_2", "beta3_2", "beta4_2", "beta5_2",
-#                    "beta1_3", "beta2_3", "beta3_3", "beta4_3", "beta5_3",
-#                    "beta1_4", "beta2_4", "beta3_4", "beta4_4", "beta5_4"),
-#                  c("1", "2", "3", "4", "5", "6", "7", "8"))
-# dimnames(mus) <- dimnames
-# dimnames(sigmas) <- dimnames
-# 
-# as.data.frame(mus)
-# as.data.frame(sigmas)
->>>>>>> Stashed changes
-```
-
-```{r}
-# # Each group's parameters get its own plots (4 3x2 plots in total)
-# for (i in 1:4) {
-#   par(mfrow = c(3,2))
-#   x <- seq(-2, 2, length = 1000)
-#   y <- dnorm(x, mean = summary_hierarchical$mean[1+i], sd = summary_hierarchical$sd[1+i])
-#   plot(x, y, type = "l", xlab = "alpha")
-#   for (j in 1:5) {
-#     x <- seq(-1, 1, length = 1000)
-#     y <- dnorm(x, mean = summary_hierarchical$mean[5+(i-1)*5+j], sd = summary_hierarchical$sd[5+(i-1)*5+j])
-#     plot(x, y, type = "l", xlab = paste0("beta", i))
-#   }
-# }
+# Each group's parameters get its own plots (4 3x2 plots in total)
+for (i in 1:4) {
+  par(mfrow = c(3,2))
+  x <- seq(-2, 2, length = 1000)
+  y <- dnorm(x, mean = summary_hierarchical$mean[1+i], sd = summary_hierarchical$sd[1+i])
+  plot(x, y, type = "l", xlab = "alpha")
+  for (j in 1:5) {
+    x <- seq(-1, 1, length = 1000)
+    y <- dnorm(x, mean = summary_hierarchical$mean[5+(i-1)*5+j], sd = summary_hierarchical$sd[5+(i-1)*5+j])
+    plot(x, y, type = "l", xlab = paste0("beta", i))
+  }
+}
 ```
 
 ## Model comparison
 
 ```{r}
-# dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
-#                  c("pooled", "h. group 1", "h. group 2",
-#                    "h. group 3", "h. group 4"))
-# post_table <- matrix(nrow = 6, ncol = 5, dimnames = dimnames)
-# 
-# # Fill 1st column
-# for (i in 1:6) {
-#   mean <- summary_pooled$mean[1+i]
-#   sd <- summary_pooled$sd[1+i]
-#   post_table[i,1] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
-# }
-# # Fill other columns
-# # first alphas
-# for (i in 1:4) {
-#   mean <- summary_hierarchical$mean[1+i]
-#   sd <- summary_hierarchical$sd[1+i]
-#   post_table[1, 1+i] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
-# }
-# # then betas
-# for (i in 1:4) {
-#   for(j in 1:5) {
-#     mean <- summary_hierarchical$mean[5+(i-1)*5+j]
-#     sd <- summary_hierarchical$sd[5+(i-1)*5+j]
-#     post_table[j+1,i+1] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
-#   }
-# }
-# 
-# as.data.frame(post_table)
+dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
+                 c("pooled", "h. group 1", "h. group 2",
+                   "h. group 3", "h. group 4"))
+post_table <- matrix(nrow = 6, ncol = 5, dimnames = dimnames)
+
+# Fill 1st column
+for (i in 1:6) {
+  mean <- summary_pooled$mean[1+i]
+  sd <- summary_pooled$sd[1+i]
+  post_table[i,1] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
+}
+# Fill other columns
+# first alphas
+for (i in 1:4) {
+  mean <- summary_hierarchical$mean[1+i]
+  sd <- summary_hierarchical$sd[1+i]
+  post_table[1, 1+i] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
+}
+# then betas
+for (i in 1:4) {
+  for(j in 1:5) {
+    mean <- summary_hierarchical$mean[5+(i-1)*5+j]
+    sd <- summary_hierarchical$sd[5+(i-1)*5+j]
+    post_table[j+1,i+1] <- paste0("N(", round(mean,3), ", ", round(sd,3), ")")
+  }
+}
+
+as.data.frame(post_table)
 ```
 
 ```{r}
-# log_lik_pooled <- fit_pooled$draws("log_lik", format = "matrix")
-# log_lik_hierarchical <- fit_hierarchical$draws("log_lik", format = "matrix")
-# 
-# loo_pooled <- loo(log_lik_pooled)
-# loo_hierarchical <- loo(log_lik_hierarchical)
-# 
-# loo_compare(list("pooled" = loo_pooled, "hierarchical" = loo_hierarchical))
+log_lik_pooled <- fit_pooled$draws("log_lik", format = "matrix")
+log_lik_hierarchical <- fit_hierarchical$draws("log_lik", format = "matrix")
+
+loo_pooled <- loo(log_lik_pooled)
+loo_hierarchical <- loo(log_lik_hierarchical)
+
+loo_compare(list("pooled" = loo_pooled, "hierarchical" = loo_hierarchical))
 ```
 
 \newpage
