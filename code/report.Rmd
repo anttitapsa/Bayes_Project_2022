@@ -178,10 +178,10 @@ sum(summary_pooled$rhat < 0.99)
 ```
 
 ```{r pooled_ess}
-mean(fit_pooled$summary()$ess_tail)
-sum(fit_pooled$summary()$ess_tail<400)
-mean(fit_pooled$summary()$ess_bulk)
-sum(fit_pooled$summary()$ess_bulk<400)
+mean(summary_pooled$ess_tail)
+sum(summary_pooled$ess_tail<400)
+mean(summary_pooled$ess_bulk)
+sum(summary_pooled$ess_bulk<400)
 ```
 
 None of the $\hat{R}$-values for the pooled model exceeds 1.01 which indicates that there are no problems with the convergence of the set of simulated chains. The effective sample size (ESS) is over 400 (recommended threshold with four parallel chains, 100 per chain) for all of the ess_bulk and ess_tail values which indicates that the $\hat{R}$-estimate can be trusted to make decisions about convergence and the quality of the chains. In addition, the model does not observe divergence.
@@ -189,16 +189,16 @@ None of the $\hat{R}$-values for the pooled model exceeds 1.01 which indicates t
 ### Hierarchical model
 
 ```{r hierarchical_rhat}
-sum(fit_hierarchical$summary()$rhat > 1.01)
-sum(fit_hierarchical$summary()$rhat < 0.99)
+summary_hierarchical <- fit_hierarchical$summary()
+sum(summary_hierarchical$rhat > 1.01)
+sum(summary_hierarchical$rhat < 0.99)
 ```
 
-
 ```{r hierarchical_ess}
-mean(fit_hierarchical$summary()$ess_tail)
-sum(fit_hierarchical$summary()$ess_tail<400)
-mean(fit_hierarchical$summary()$ess_bulk)
-sum(fit_hierarchical$summary()$ess_bulk<400)
+mean(summary_hierarchical$ess_tail)
+sum(summary_hierarchical$ess_tail<400)
+mean(summary_hierarchical$ess_bulk)
+sum(summary_hierarchical$ess_bulk<400)
 ```
 
 For the hierarchical model a few $\hat{R}$-values exceed 1.01 and a few ESS-values are below 400. The model gives divergence of approximately 5%. These facts can indicate that there might be some problems with the convergence. On the other hand, these values do not differ significantly from the desired values the probability of having problems with convergence is small.
@@ -427,6 +427,8 @@ log_lik_hierarchical <- fit_hierarchical$draws("log_lik", format = "matrix")
 loo_pooled <- loo(log_lik_pooled)
 loo_hierarchical <- loo(log_lik_hierarchical)
 
+loo_pooled
+loo_hierarchical
 loo_compare(list("pooled" = loo_pooled, "hierarchical" = loo_hierarchical))
 ```
 
