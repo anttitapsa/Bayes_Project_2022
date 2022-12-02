@@ -50,7 +50,7 @@ library(Stat2Data)
 data("FirstYearGPA")
 ```
 
-```{r databarplot, fig.cap= "The division of the data in four different groups. The amounts of the data points in the groups can be seen in bars." }
+```{r databarplot, fig.cap= "The division of the data in four different groups. The amounts of the data points in the groups can be seen in bars.", echo=FALSE}
 White <- FirstYearGPA$White
 White <- gsub(1, "White", White)
 White <- gsub(0, "Non-White", White)
@@ -531,7 +531,7 @@ There is slightly more variation in the posteriors of the hierarchical model whe
 
 ## Posterior distributions
 
-Next, let us inspect and visualise the posterior distributions of $\alpha$ and $\beta_k$. The table below contains the posterior distributions of the six variables for the pooled model and all 4 groups of the hierarchical model separately.
+Next, let us inspect and visualise the posterior distributions of $\alpha$ and $\beta_k$. The table below contains the posterior distributions of the six variables for the pooled model and all 4 groups of the hierarchical model separately. All parameters are reported with the accuracy of 3 decimals.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
@@ -568,40 +568,55 @@ Let us also plot the posterior distributions.
 
 ### Pooled model
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4.5, fig.cap="Posterior distributions of the parameters of the pooled model. Note the varying x-axes."}
+beta_xlims = c(1, 0.01, 0.01, 0.1, 0.1)
 par(mfrow = c(3,2))
+
 x <- seq(-2, 2, length = 1000)
 y <- dnorm(x, mean = summary_pooled$mean[2], sd = summary_pooled$sd[2])
 plot(x, y, type = "l", xlab = "alpha")
-for (i in 1:5) {
-  x <- seq(-1, 1, length = 1000)
-  y <- dnorm(x, mean = summary_pooled$mean[2+i], sd = summary_pooled$sd[2+i])
-  plot(x, y, type = "l", xlab = paste0("beta", i))
+for (j in 1:5) {
+  x <- seq(-beta_xlims[j], beta_xlims[j], length = 1000)
+  y <- dnorm(x, mean = summary_pooled$mean[2+j], sd = summary_pooled$sd[2+j])
+  plot(x, y, type = "l", xlab = paste0("beta", j))
 }
 ```
 
-The plot shows that the slope parameter $\beta_1$, multiplying the variable for high school GPA, likely differs from 0 and has the most effect on college GPA, our target variable. The other $\beta$s have very narrow distributions close to 0, though, implying their effect on college GPA is very small or non-existent.
+The plot shows that the slope parameter $\beta_1$, multiplying the variable for high school GPA, likely differs from 0 and has the most effect on college GPA, our target variable. The other $\beta$s have very narrow distributions close to 0, implying their effect on college GPA is very small or non-existent.
 
 ### Hierarchical model
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Each group's parameters get its own plots (4 3x2 plots in total)
-for (i in 1:4) {
-  par(mfrow = c(3,2))
-  x <- seq(-2, 2, length = 1000)
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4.5, fig.cap="Posterior distributions of the parameters of the hierarchical model. Each group's parameters are plotted in a different colour (black = group 1, blue = group 2, pink = group 3, violet = group 4). Note also the varying x-axes."}
+# All parameters of the hierarchical model groups are plotted in the same plots
+cols = c("black", "blue", "deeppink", "darkviolet")
+beta_ylims = c(4.5, 750, 700, 80, 55)
+par(mfrow = c(3,2))
+
+# Plot alphas
+x <- seq(-2, 2, length = 1000)
+y <- dnorm(x, mean = summary_hierarchical$mean[2],
+           sd = summary_hierarchical$sd[2])
+plot(x, y, type = "l", xlab = "alpha", col = cols[1], ylim = c(0, 1))
+for (i in 2:4) {
   y <- dnorm(x, mean = summary_hierarchical$mean[1+i],
              sd = summary_hierarchical$sd[1+i])
-  plot(x, y, type = "l", xlab = "alpha")
-  for (j in 1:5) {
-    x <- seq(-1, 1, length = 1000)
+  lines(x, y, type = "l", xlab = "alpha", col = cols[i])
+}
+# Plot betas
+for (j in 1:5) {
+  x <- seq(-beta_xlims[j], beta_xlims[j], length = 1000)
+  y <- dnorm(x, mean = summary_hierarchical$mean[5+j], 
+             sd = summary_hierarchical$sd[5+j])
+  plot(x, y, type = "l", xlab = paste0("beta", j), col = cols[1], ylim = c(0, beta_ylims[j]))
+  for (i in 2:4) {
     y <- dnorm(x, mean = summary_hierarchical$mean[5+(i-1)*5+j], 
                sd = summary_hierarchical$sd[5+(i-1)*5+j])
-    plot(x, y, type = "l", xlab = paste0("beta", j))
+    lines(x, y, type = "l", xlab = paste0("beta", j), col = cols[i])
   }
 }
 ```
 
-The posteriors of the hierarchical model are quite similar to the pooled model. The intercept terms $\alpha$ of groups 1 and 3, and of groups 2 and 4, are very similar to each other, implying that the ethnicity of the student governs the intercept term $\alpha$. Furthermore, there is slight variation in the slope terms $\beta_k$, especially $\beta_5$: for groups with less data, the distributions are narrower, and for groups with more data, wider.
+The posteriors of the hierarchical model are quite similar to the pooled model. The distributions of the intercept terms $\alpha$ of groups 1 and 3, and of groups 2 and 4, are very similar to each other, implying that the ethnicity of the student governs the intercept term $\alpha$ in the hierarchical model. Furthermore, there is slight variation in the slope terms $\beta_k$, especially $\beta_4$ and $\beta_5$: for groups with less data, the distributions are narrower, and for groups with more data, wider.
 
 
 ## Model comparison
