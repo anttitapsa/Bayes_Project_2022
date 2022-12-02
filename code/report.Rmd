@@ -454,7 +454,7 @@ for (i in 1:length(musigmas)) {
 }
 
 prior_table <- as.data.frame(prior_table)
-kable(t(prior_table), format = "latex")
+kable(t(prior_table), format = "latex", caption = "Used priors for sensitivity analysis")
 ```
 
 ### Pooled model
@@ -482,11 +482,11 @@ for (i in 1:length(musigmas)) {
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-kable(as.data.frame(mus_pooled), format = "latex", caption = "Posterior means")
-kable(as.data.frame(sigmas_pooled), format = "latex", caption = "Posterior SDs")
+kable(as.data.frame(mus_pooled), format = "latex", caption = "Sensitivity analysis of the pooled model: Posterior means")
+kable(as.data.frame(sigmas_pooled), format = "latex", caption = "Sensitivity analysis of the pooled model: Posterior SDs")
 ```
 
-The above results show that regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are very similar to each other. Therefore it can be concluded that the pooled model is not sensitive to changes in the priors.
+The pooled model was run with the 8 prior combinations. The resulting posterior means and SDs for all parameters are reported in the two tables above. The results show that regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are very similar to each other. Therefore it can be concluded that the pooled model is not sensitive to changes in the priors.
 
 ### Hierarchical model
 
@@ -526,11 +526,11 @@ for (i in 1:length(musigmas)) {
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-kable(as.data.frame(mus_hierarchical), format = "latex", caption = "Posterior means")
-kable(as.data.frame(sigmas_hierarchical), format = "latex", caption = "Posterior SDs")
+kable(as.data.frame(mus_hierarchical), format = "latex", caption = "Sensitivity analysis of the hierarchical model: Posterior means")
+kable(as.data.frame(sigmas_hierarchical), format = "latex", caption = "Sensitivity analysis of the hierarchical model: Posterior SDs")
 ```
 
-There is slightly more variation in the posteriors of the hierarchical model when various priors are utilised, but the posteriors look quite similar nonetheless. It can be concluded that the hierarchical model, similarly to the pooled model, is not sensitive to changes in the priors.
+The hierarchical model's sensitivity was tested similarly to the pooled model. The resulting posteriors are shown in two tables. There is slightly more variation in the posteriors of the hierarchical model when various priors are utilised, but the posteriors look quite similar nonetheless. It can be concluded that the hierarchical model, similarly to the pooled model, is not sensitive to changes in the priors.
 
 
 ## Posterior distributions
@@ -565,7 +565,7 @@ for (i in 1:4) {
   }
 }
 
-kable(as.data.frame(post_table), format = "latex")
+kable(as.data.frame(post_table), format = "latex", caption = "Posterior distributions of the parameters for both models")
 ```
 
 Let us also plot the posterior distributions.
@@ -586,11 +586,11 @@ for (j in 1:5) {
 }
 ```
 
-The plot shows that the slope parameter $\beta_1$, multiplying the variable for high school GPA, likely differs from 0 and has the most effect on college GPA, our target variable. The other $\beta$s have very narrow distributions close to 0, implying their effect on college GPA is very small or non-existent.
+The plot shows that the slope parameter $\beta_1$, multiplying the variable for high school GPA, likely differs from 0 and it the largest of the coefficients $\beta_k$. This implies that high school GPA has the most effect on college GPA, our target variable. The other $\beta$s have very narrow distributions close to 0, implying their effect on college GPA is either very small or non-existent.
 
 ### Hierarchical model
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4.5, fig.cap="Posterior distributions of the parameters of the hierarchical model. Each group's parameters are plotted in a different colour (black = group 1, blue = group 2, pink = group 3, violet = group 4). Note also the varying x-axes."}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4.5, fig.cap="Posterior distributions of the parameters of the hierarchical model. Each group's parameters are plotted in a different colour (black = group 1, blue = group 2, pink = group 3, violet = group 4). Note the varying x-axes."}
 # All parameters of the hierarchical model groups are plotted in the same plots
 cols = c("black", "blue", "deeppink", "darkviolet")
 beta_ylims = c(4.5, 750, 700, 80, 55)
@@ -647,20 +647,22 @@ Comparing the two models reveals that the pooled model seems to fit to the data 
 
 # Discussion about problems and improvements
 
-The overall problem in the project was that there was not enough data. For example in hierarchical model, some of the data groups were quite small: th group of non white groups only contained 18 and 28 data, and the rest of the 173 data points were distributed between white groups. In addition, there was big variation in the magnitudes of the variables (HSGPA etc.). This could have been solved by using normalisation.
+The largest problem in the project was the amount of data. Although there was enough data for the pooled model, for the hierarchical model some of the data groups were quite small. For example, the non-white groups only contained 18 and 28 data points, and the rest of the 173 data points were distributed between white groups. 
 
-There were divergences in the hierarchical model. If there was more time, the divergences could have been solved by analysing more the running of the model; The default values (the number of the chains, the number of the iterations etc.) were utilised during the model fitting. Furthermore, testing out different priors to solve the divergence issue.
+There was large variation in the magnitudes of the variables: for example, the SATV and SATM variables had 100 times larger values than the HSGPA. Because of the magnitude difference, interpreting the coefficients $\beta_k$ was not very simple. This problem could have been solved by using variable normalisation before running the models.
+
+There were some divergences in the hierarchical model. If there had been more time, the divergences could have been solved by analysing the the model and how it was run further. For example, the default values (number of chains, number of iterations etc.) were utilised during model fitting, and different values could be tested. Furthermore, different priors could have been tested to see if it would solve the divergence issue.
 
 
 # Conclusion
 
-Based on the analysis, the pooled model describes the data better than the hierarchical model. However, both models performed well. The hierarchical model describes the white and non white students differently. So according to the hierarchical model, there were more differences between white and non-white students than between male and female students. This can be seen most clearly from the posterior distributions of the $\alpha$s.
+Both models predicted that the high school GPA affected our target variable, college GPA, the most, as its coefficient $\beta_1$ was the largest. Other variables had either a smaller or non-existent effect. It is difficult to say for sure, as the posteriors of some of the $\beta_k$ overlap with 0, although they are more on the positive side. Furthermore, the large magnitude differences between variables make interpreting the coefficients difficult. The hierarchical model found that the ethnicity of a student governs the $\alpha$ and $\beta_2$ parameters and that gender seemed to have no effect on them. However, the parameters were quite similar across all four groups in the hierarchical model, except for a few cases when there was a large difference between the amount of data in the groups. This can be seen e.g. from $\beta_5$: the second group had the least data, and therefore the posterior of $\beta_5$ for the second group is the widest.
+
+Based on the model comparison with LOO-CV, the pooled model describes the data better than the hierarchical model. However, both models performed quite well and the performance difference was not large. As there were various issues with the hierarchical model, e.g. divergences and $\hat{k}$ values, the pooled model should be chosen as the better model and utilised for any future predictions.
 
 
 # Self-reflection
 
-During the project, we noticed that finding the data is difficult and time consuming. Moreover, the pre-processing of the data and deciding the suitable data groups for the hierarchical model was surprisingly time consuming. We also noticed the importance of the amount of the data: more data, better model.
-
-We learned to make more complicated stan models.  
+During the project, we learned to make more complicated Stan models. Additionally, we noticed that finding suitable data for data analysis is surprisingly difficult and time-consuming. Moreover, understanding the data, pre-processing it, and deciding the suitable groups for the hierarchical model took a considerable amount of time. We also noticed the importance of the amount of data: the more data we can feed the model, the better the model fits and predicts. However, we also learned that too much data can become a practical issue, as running the models with all 219 data points took quite a long time.
 
 
