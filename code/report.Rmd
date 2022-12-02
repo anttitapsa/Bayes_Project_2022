@@ -43,7 +43,7 @@ library(Stat2Data)
 data("FirstYearGPA")
 ```
 
-This report attempts to solve the problem of predicting the GPA of first-year college students using this data. Five variables were chosen to predict the first-year college GPA (GPA): HSGPA, SATV, SATM, HU and SS. All of the chosen variables have numerical values. In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors. The barplot below represents these four groups and their sizes.
+This report attempts to solve the problem of predicting the GPA of first-year college students using this data. Five variables were chosen to predict the first-year college GPA (GPA): HSGPA, SATV, SATM, HU and SS. All of the chosen variables have numerical values. In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors. The two categorical variables were selected due to their most similar sample sizes. The barplot below represents these four groups and their sizes.
 
 ```{r libraries, warning=FALSE, message=FALSE}
 # Importing packages
