@@ -36,18 +36,22 @@ White         1= white students, 0= others
 CollegeBound  1=attended a high school where >=50% students intended to go on to
               college, 0=otherwise
 ```
-The data can be obtained from: https://vincentarelbundock.github.io/Rdatasets/doc/Stat2Data/FirstYearGPA.html 
+The description of the data can be obtained from: https://vincentarelbundock.github.io/Rdatasets/doc/Stat2Data/FirstYearGPA.html. The data can be accessed in R from the Stat2Data package as follows:
 
-This report solves the problem of predicting the GPA of first-year college students using this data. Our models use all numerical values (HSGPA, SATV, SATM, HU and SS) to predict the first-year college GPA (GPA). In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors. The barplot below represents these four groups and their sizes. 
+```{r}
+library(Stat2Data)
+data("FirstYearGPA")
+```
+
+This report attempts to solve the problem of predicting the GPA of first-year college students using this data. Five variables were chosen to predict the first-year college GPA (GPA): HSGPA, SATV, SATM, HU and SS. All of the chosen variables have numerical values. In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors. The barplot below represents these four groups and their sizes.
+
 ```{r libraries, warning=FALSE, message=FALSE}
+# Importing packages
 library(cmdstanr)
 library(bayesplot)
 library(ggplot2)
 library(gridExtra)
 library(loo)
-library(Stat2Data)
-
-data("FirstYearGPA")
 ```
 
 ```{r databarplot, fig.cap= "The division of the data in four different groups. The amounts of the data points in the groups can be seen in bars.", echo=FALSE}
@@ -65,15 +69,15 @@ ggplot(data = counts, aes(x = Male, fill=White)) + geom_bar() +
 
 # Models
 
-In this project, two different models are utilised: pooled and hierarchical model. Both are are covered in following sections. The mathematical notations, Stan implementations, and stan model runs are included in the sections. The both of the models follow the linear Gaussian model whose expected values are constructed using linear function with variables found in data (HSGPA, SATV, SATM, HU, and SS) and parameters $\alpha$, $\beta_1$, $\beta_2$, $\beta_3$, $\beta_4$, and $\beta_5$.   
+In this project, two different models are utilised: a pooled and a hierarchical model. Both are are covered in following sections. The mathematical notations, Stan implementations, and Stan model runs are included in the sections. Both models are linear Gaussian models whose expected values $\mu_i$ are constructed as linear combinations of the chosen variables HSGPA, SATV, SATM, HU, and SS. The coefficients of these linear combinations are our parameters $\alpha$, $\beta_1$, $\beta_2$, $\beta_3$, $\beta_4$, and $\beta_5$.
 
 Weakly informative normal priors were used in both models. N(0,10) was the prior distribution for $\sigma$ in both models. In the pooled model, N(0,100) was the prior for both $\alpha$ and all $\beta_k$. The hierarchical model had similar priors: N(0,100) for all means $\mu_{\alpha}$ and $\mu_{\beta_k}$, and N(0,10) for all standard deviations $\sigma_{\alpha}$ and $\sigma_{\beta_k}$. We thought these priors reasonable for multiple reasons. Firstly, they all center on 0, which was thought wisest as we have no information whether the intercept $\alpha$ or the slopes $\beta_k$ should be positive or negative. Secondly, the standard deviations, 100 for the means and 10 for the standard deviations, were considered large enough to produce wide enough (but not too wide) prior distributions.
 
-As can be seen from the above code lines, default values were used for running the MCMC chains. That is, 4 chains of 2000 iterations were run, and the first 1000 iterations of each chain were considered warm-up.
+As can be seen from the code where the Stan models are run, default values were used for running the MCMC chains. That is, 4 chains of 2000 iterations were run, and the first 1000 iterations of each chain were considered warm-up.
 
 ## Pooled model
 
-In pooled model, all the expected values are constructed using the common parameters $\alpha$ and $\beta$s with weakly informative priors. All the GPAs have common $\sigma$. 
+In the pooled model, the expected values $\mu_i$ are constructed using the common parameters $\alpha$ and $\beta_k$, which have the aforementioned weakly informative priors. The GPAs have a common standard deviation $\sigma$. 
 
 **Mathematical notation**
 
@@ -152,7 +156,7 @@ fit_pooled <- mod_pooled$sample(data_pooled, refresh = 0, seed = 03091900)
 
 ## Hierarchical model
 
-In Hierarchical model, students have been divided in four different groups: white males, white females, non white males, and non white females. All students in all the groups have own parameters $\alpha$s and $\beta$s which are constructed using common hyperparameters for all the different groups.
+In the hierarchical model, students have been divided in four different groups: white males, non-white males, white females, and non-white females. The groups now have their own parameters $\alpha_j$ and $\beta_{kj}$, where $j$ denotes the group a student belongs to. The parameters $\alpha_j$ and $\beta_{kj}$ have common hyperparameters , implying the parameters can be different across groups, but they have something common as well.
 
 **Mathematical notation**
 
@@ -321,7 +325,7 @@ fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 0,
 
 # Analysis and Results
 
-This section contains the analysis of the both models. The analysis contains convergence diagnostics, posterior predictive checks, and prior sensitivity analysis. This section also contains discussion about posterior distributions and model comparison in above order.
+This section contains the analysis of both models. The analysis includes convergence diagnostics, posterior predictive checks, and prior sensitivity analysis. This section also contains discussion about posterior distributions of the parameters and model comparison.
 
 ## Converge diagnostics
 
@@ -340,7 +344,7 @@ mean(summary_pooled$ess_bulk)
 sum(summary_pooled$ess_bulk<400)
 ```
 
-None of the $\hat{R}$-values for the pooled model exceeds 1.01 which indicates that there are no problems with the convergence of the set of simulated chains. The effective sample size (ESS) is over 400 (recommended threshold with four parallel chains, 100 per chain) for all of the ess_bulk and ess_tail values which indicates that the $\hat{R}$-estimate can be trusted to make decisions about convergence and the quality of the chains. In addition, the model does not observe divergence.
+None of the $\hat{R}$-values for the pooled model exceed 1.01, which indicates that there are no problems with the convergence of the simulated chains. The effective sample size (ESS) is over 400 (recommended threshold with four parallel chains, 100 per chain) for all of the ess_bulk and ess_tail values, which indicates that the $\hat{R}$-estimate can be trusted to make decisions about convergence and the quality of the chains. Finally, the model does not observe divergence.
 
 ### Hierarchical model
 
@@ -357,18 +361,18 @@ mean(summary_hierarchical$ess_bulk)
 sum(summary_hierarchical$ess_bulk<400)
 ```
 
-Similarly to the pooled model, in the hierarchical model, no $\hat{R}$-values exceed 1.01, indicating that convergence is not a problem. A few ESS values are below 400 and the model gives a divergence of approximately 5%. These facts can indicate that there might be some problems with the convergence. On the other hand, these values do not differ significantly from the desired values the probability of having problems with convergence is small.
+Similarly to the pooled model, in the hierarchical model, no $\hat{R}$-values exceed 1.01, indicating that the chains converge. A few ESS values are below 400 and the model gives a divergence of approximately 5%. These facts indicate that there might be some problems with the convergence of the model. However, the obtained values do not differ significantly from the desired values, so the probability of having problems with convergence is small.
 
 
 ## Posterior predictive checks
 
-48 histograms of replications of the data (created based on the posterior predictive distributions) are shown for all the models. In addition, there is overlayed distributions and empirical cumulative distribution (ecdf) functions of 100 replications in the two with the original distribution and ecdf. These different plots of replication are compared to the plots of the original data to investigate, how good predictions fitted model can make. The closer the replications are original data, the better the predictions are.
+48 histograms of replications of the original data, i.e. the posterior predictive distributions, are shown for all models. In addition, the empirical probability density (epdf) and empirical cumulative distribution (ecdf) functions of the original data and 100 replications are overlapped and compared in order to investigate how well the posterior corresponds to the original data. The closer the replications are to the original data, the better predictions the fitted model can make.
 
 ### Pooled model
 
-As it can be seen in Figure \@ref(fig:pooledposterior), the histograms and overlayed distribution functions have almost same width as the original data, and they follow quite nicely the shape of the original data. This means that the replications are good, and follows well original data. Moreover, replicated ecdf functions follow the shape of the ecdf of the original data, and the variation around the original ecdf function is quite low. Finally, the model is good in posterior prediction. 
+As can be seen in Figure \@ref(fig:pooledposterior), the replicated histograms have a similar distribution and width compared to the original data. Moreover, the replicated epdf and ecdf functions follow the shape of the epdf and ecdf of the original data, and variation around the original functions is quite low. Therefore the model posterior corresponds to the original data well and the model is good in posterior prediction.
 
-```{r pooledposterior, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the pooled model are shown using histograms. In addition the original data is shown in left top corner. Below the histograms, the 100 distributions of the replications are over layed with original data on left. On right 100 ecdf are over layed with original data. "}
+```{r pooledposterior, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the pooled model are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
 y <- FirstYearGPA$GPA
 ypred <- fit_pooled$draws("ypred", format = "matrix")
 
@@ -380,11 +384,11 @@ grid.arrange( ppc_hist(y, ypred[1:48,]),
 
 ### Hierarchical model
 
-As it can be seen when comparing the Figures \@ref(fig:hierarchicalposterior1), \@ref(fig:hierarchicalposterior2), \@ref(fig:hierarchicalposterior3), and \@ref(fig:hierarchicalposterior4), for white students the replications follow better the original data than non white students replications. The biggest reason for that is the tinier amount of the data points in non white groups. It can bee seen from Figures \@ref(fig:hierarchicalposterior3) and \@ref(fig:hierarchicalposterior4), that replications of non white groups have more width variations and more out layers than original data. In addition, edcfs have bigger variations in non white groups than in white groups.
+As can be seen when comparing Figures \@ref(fig:hierarchicalposterior1), \@ref(fig:hierarchicalposterior2), \@ref(fig:hierarchicalposterior3), and \@ref(fig:hierarchicalposterior4), the replications follow the original data better for white students than non-white students. The biggest reason for this is the smaller amount of data points in non-white groups. It can bee seen from the figures that replications of non-white groups have more width variation and more outliers than in the original data. In addition, ecdfs have more variation in non-white groups than in white groups.
 
-In overall, the replications of the white group are quite good (not as good as in pooled model) and models in non white groups are not so good since replications in these groups don't follow the original data.
+Overall, the replications of the white groups are quite good, although not as good as in the pooled model, and the replications in non-white groups are not as good since they don't follow the original data as well.
 
-```{r hierarchicalposterior1, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for data group of white male students are shown using histograms. In addition the original data is shown in left top corner. Below the histograms, the 100 distributions of the replications are over layed with original data on left. On right 100 ecdf are over layed with original data. "}
+```{r hierarchicalposterior1, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of white male students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
 y1 <- data_hierarchical$y1
 ypred1 <- fit_hierarchical$draws("ypred1", format = "matrix")
 
@@ -394,7 +398,7 @@ ppc_ecdf_overlay(y1, ypred1[1:100,]),
               layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r hierarchicalposterior2, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for data group of non white male students are shown using histograms. In addition the original data is shown in left top corner. Below the histograms, the 100 distributions of the replications are over layed with original data on left. On right 100 ecdf are over layed with original data. "}
+```{r hierarchicalposterior2, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of non-white male students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
 y2 <- data_hierarchical$y2
 ypred2 <- fit_hierarchical$draws("ypred2", format = "matrix")
 
@@ -404,7 +408,7 @@ ppc_ecdf_overlay(y2, ypred2[1:100,]),
               layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r hierarchicalposterior3, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for data group of white female students are shown using histograms. In addition the original data is shown in left top corner. Below the histograms, the 100 distributions of the replications are over layed with original data on left. On right 100 ecdf are over layed with original data. "}
+```{r hierarchicalposterior3, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of white female students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
 y3 <- data_hierarchical$y3
 ypred3 <- fit_hierarchical$draws("ypred3", format = "matrix")
 
@@ -414,7 +418,7 @@ ppc_ecdf_overlay(y3, ypred3[1:100,]),
               layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r hierarchicalposterior4, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for data group of non white female students are shown using histograms. In addition the original data is shown in left top corner. Below the histograms, the 100 distributions of the replications are over layed with original data on left. On right 100 ecdf are over layed with original data. "}
+```{r hierarchicalposterior4, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of non-white female students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
 y4 <- data_hierarchical$y4
 ypred4 <- fit_hierarchical$draws("ypred4", format = "matrix")
 
@@ -650,7 +654,7 @@ There were divergences in the hierarchical model. If there was more time, the di
 
 # Conclusion
 
-Based on the analysis, the pooled model describes the data better than the hierarchical model. However, both models performed well. The hierarchical model describes the white and non white students differently. So according to the hierarchical model, there were more differences between white and non-white students than between male and female students. This can be seen most clearly from the posterior distributions of the $\alpha$s.   
+Based on the analysis, the pooled model describes the data better than the hierarchical model. However, both models performed well. The hierarchical model describes the white and non white students differently. So according to the hierarchical model, there were more differences between white and non-white students than between male and female students. This can be seen most clearly from the posterior distributions of the $\alpha$s.
 
 
 # Self-reflection
