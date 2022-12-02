@@ -156,7 +156,7 @@ fit_pooled <- mod_pooled$sample(data_pooled, refresh = 0, seed = 03091900)
 
 ## Hierarchical model
 
-In the hierarchical model, students have been divided in four different groups: white males, non-white males, white females, and non-white females. The groups now have their own parameters $\alpha_j$ and $\beta_{kj}$, where $j$ denotes the group a student belongs to. The parameters $\alpha_j$ and $\beta_{kj}$ have common hyperparameters , implying the parameters can be different across groups, but they have something common as well.
+In the hierarchical model, students have been divided in four different groups: 1. white males, 2. non-white males, 3. white females, and 4. non-white females. The groups now have their own parameters $\alpha_j$ and $\beta_{kj}$, where $j$ denotes the group a student belongs to. The parameters $\alpha_j$ and $\beta_{kj}$ have common hyperparameters , implying the parameters can be different across groups, but they have something common as well.
 
 **Mathematical notation**
 
