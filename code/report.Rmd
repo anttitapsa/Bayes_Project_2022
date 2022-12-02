@@ -453,7 +453,7 @@ for (i in 1:length(musigmas)) {
   prior_table[2, i] <- paste0("N(0,", sigmasigmas[i], ")")
 }
 
-kable(as.data.frame(prior_table), format = "latex", caption = "Used priors for sensitivity analysis")
+kable(t(as.data.frame(prior_table)), format = "latex")
 ```
 
 ### Pooled model
@@ -573,15 +573,16 @@ Let us also plot the posterior distributions.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4.5, fig.cap="Posterior distributions of the parameters of the pooled model. Note the varying x-axes."}
 beta_xlims = c(1, 0.01, 0.01, 0.1, 0.1)
+beta_ylims = c(6, 1050, 1000, 110, 70)
 par(mfrow = c(3,2))
 
 x <- seq(-2, 2, length = 1000)
 y <- dnorm(x, mean = summary_pooled$mean[2], sd = summary_pooled$sd[2])
-plot(x, y, type = "l", xlab = "alpha")
+plot(x, y, type = "l", xlab = "alpha", ylim = c(0, 1.25))
 for (j in 1:5) {
   x <- seq(-beta_xlims[j], beta_xlims[j], length = 1000)
   y <- dnorm(x, mean = summary_pooled$mean[2+j], sd = summary_pooled$sd[2+j])
-  plot(x, y, type = "l", xlab = paste0("beta", j))
+  plot(x, y, type = "l", xlab = paste0("beta", j), ylim = c(0, beta_ylims[j]))
 }
 ```
 
@@ -592,14 +593,13 @@ The plot shows that the slope parameter $\beta_1$, multiplying the variable for 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4.5, fig.cap="Posterior distributions of the parameters of the hierarchical model. Each group's parameters are plotted in a different colour (black = group 1, blue = group 2, pink = group 3, violet = group 4). Note the varying x-axes."}
 # All parameters of the hierarchical model groups are plotted in the same plots
 cols = c("black", "blue", "deeppink", "darkviolet")
-beta_ylims = c(4.5, 750, 700, 80, 55)
 par(mfrow = c(3,2))
 
 # Plot alphas
 x <- seq(-2, 2, length = 1000)
 y <- dnorm(x, mean = summary_hierarchical$mean[2],
            sd = summary_hierarchical$sd[2])
-plot(x, y, type = "l", xlab = "alpha", col = cols[1], ylim = c(0, 1))
+plot(x, y, type = "l", xlab = "alpha", col = cols[1], ylim = c(0, 1.25))
 for (i in 2:4) {
   y <- dnorm(x, mean = summary_hierarchical$mean[1+i],
              sd = summary_hierarchical$sd[1+i])
