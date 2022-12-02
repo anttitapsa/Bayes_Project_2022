@@ -473,7 +473,7 @@ dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
 mus_pooled <- matrix(nrow = 6, ncol = length(musigmas), dimnames = dimnames)
 sigmas_pooled <- matrix(nrow = 6, ncol = length(musigmas), dimnames = dimnames)
 
-for (i in 1:1) { #length(musigmas)
+for (i in 1:length(musigmas)) { 
   data_pooled_sens <- list(N = nrow(FirstYearGPA),
                          x = subset(FirstYearGPA, select = c('HSGPA', 'SATV',
                                                              'SATM','HU','SS')),
@@ -511,7 +511,7 @@ dimnames <- list(c("alpha1", "alpha2", "alpha3", "alpha4",
 mus_hierarchical <- matrix(nrow = 24, ncol = length(musigmas), dimnames = dimnames)
 sigmas_hierarchical <- matrix(nrow = 24, ncol = length(musigmas), dimnames = dimnames)
 
-for (i in 1:1) { #length(musigmas)
+for (i in 1:length(musigmas)) { 
   data_hierarchical_sens <- list(N1 = nrow(male_white),
                                  N2 = nrow(male_non_white),
                                  N3 = nrow(female_white),
