@@ -3,7 +3,7 @@ title: "BDA project report"
 author: "Amanda Aarnio, Anni Niskanen, Antti Huttunen"
 date: "`r Sys.Date()`"
 output: 
-  pdf_document:
+  bookdown::pdf_document2:
     number_sections: true
     toc: yes
     toc_depth: 1
@@ -17,21 +17,9 @@ Can the grade point averages (GPAs) of first-year college students be predicted 
 
 The report begins with a description of the data and the problem. After this, the models are introduced and their performances are analysed. Model improvements are then discussed and conclusions are made. Finally, self-reflection of the project is presented.
 
-```{r libraries, warning=FALSE, message=FALSE}
-library(cmdstanr)
-library(bayesplot)
-library(gridExtra)
-library(loo)
-library(Stat2Data)
-
-data("FirstYearGPA")
-```
-
-\newpage
-
 # Data and Problem 
 
-The data contains information from a sample of 219 first year students at a midwestern college in 1996. The data has 10 variables:
+The data contains information from a sample of 219 first year students at a Midwestern college in 1996. The data has 10 variables:
 
 ```
 GPA           First-year college GPA on a 0.0 to 4.0 scale
@@ -40,27 +28,48 @@ SATV          Verbal/critical reading SAT score
 SATM          Math SAT score
 Male          1= male, 0= female
 HU            Number of credit hours earned in humanities courses in high school
-SS            Number of credit hours earned in social science courses in high school
-FirstGen      1= student is the first in her or his family to attend college, 0=otherwise
+SS            Number of credit hours earned in social science courses in high 
+              school
+FirstGen      1= student is the first in her or his family to attend college,
+              0=otherwise
 White         1= white students, 0= others
-CollegeBound  1=attended a high school where >=50% students intended to go on to college, 0=otherwise
+CollegeBound  1=attended a high school where >=50% students intended to go on to
+              college, 0=otherwise
 ```
 The data can be obtained from: https://vincentarelbundock.github.io/Rdatasets/doc/Stat2Data/FirstYearGPA.html 
 
-This report solves the problem of predicting the GPA of first-year college students using this data. Our models use all numerical values (HSGPA, SATV, SATM, HU and SS) to predict the first-year college GPA (GPA). In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors. The barplot below represents these four groups and their sizes.
+This report solves the problem of predicting the GPA of first-year college students using this data. Our models use all numerical values (HSGPA, SATV, SATM, HU and SS) to predict the first-year college GPA (GPA). In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors. The barplot below represents these four groups and their sizes. 
+```{r libraries, warning=FALSE, message=FALSE}
+library(cmdstanr)
+library(bayesplot)
+library(ggplot2)
+library(gridExtra)
+library(loo)
+library(Stat2Data)
 
-```{r data_barplot}
-counts <- table(White=FirstYearGPA$White, Male=FirstYearGPA$Male)
-barplot(counts,
-  xlab="Gender", col=c("darkblue","red"),
-  legend = c('Non-White', 'White'), ylab = 'Count', names=c('Female','Male'))
+data("FirstYearGPA")
 ```
 
-\newpage
+```{r databarplot, fig.cap= "The division of the data in four different groups. The amounts of the data points in the groups can be seen in bars." }
+White <- FirstYearGPA$White
+White <- gsub(1, "White", White)
+White <- gsub(0, "Non-White", White)
+Male <- FirstYearGPA$Male
+Male <- gsub(1, "Male", Male)
+Male <- gsub(0, "Female", Male)
+counts <- data.frame(White=White, Male=Male)
+ggplot(data = counts, aes(x = Male, fill=White)) + geom_bar() + 
+  xlab("Gender") + scale_fill_brewer(palette = "Paired", name = "") 
+```
+
 
 # Models
 
 In this project, two different models are utilised: pooled and hierarchical model. Both are are covered in following sections. The mathematical notations, Stan implementations, and stan model runs are included in the sections. The both of the models follow the linear Gaussian model whose expected values are constructed using linear function with variables found in data (HSGPA, SATV, SATM, HU, and SS) and parameters $\alpha$, $\beta_1$, $\beta_2$, $\beta_3$, $\beta_4$, and $\beta_5$.   
+
+Weakly informative normal priors were used in both models. N(0,10) was the prior distribution for $\sigma$ in both models. In the pooled model, N(0,100) was the prior for both $\alpha$ and all $\beta_k$. The hierarchical model had similar priors: N(0,100) for all means $\mu_{\alpha}$ and $\mu_{\beta_k}$, and N(0,10) for all standard deviations $\sigma_{\alpha}$ and $\sigma_{\beta_k}$. We thought these priors reasonable for multiple reasons. Firstly, they all center on 0, which was thought wisest as we have no information whether the intercept $\alpha$ or the slopes $\beta_k$ should be positive or negative. Secondly, the standard deviations, 100 for the means and 10 for the standard deviations, were considered large enough to produce wide enough (but not too wide) prior distributions.
+
+As can be seen from the above code lines, default values were used for running the MCMC chains. That is, 4 chains of 2000 iterations were run, and the first 1000 iterations of each chain were considered warm-up.
 
 ## Pooled model
 
@@ -80,15 +89,57 @@ $$
 
 **Stan code**
 
-```{r}
-writeLines(readLines("pooled.stan"))
+```{stan, output.var="pool", eval = FALSE}
+data {
+  int<lower=0> N;
+  matrix[N,5] x;
+  vector[N] y;
+  real musigma;
+  real sigmasigma;
+}
+
+parameters {
+  real alpha;
+  vector[5] betas;
+  real<lower=0> sigma;
+}
+
+transformed parameters {
+  vector[N] mu;
+  mu = alpha + betas[1]*x[,1] + betas[2]*x[,2] + betas[3]*x[,3] +
+       betas[4]*x[,4] + betas[5]*x[,5];
+}
+
+model {
+  // priors
+  alpha ~ normal(0, musigma);
+  betas ~ normal(0, musigma);
+  sigma ~ normal(0, sigmasigma);
+  
+  // likelihood
+  y ~ normal(mu, sigma);
+}
+
+generated quantities {
+  vector[N] ypred;
+  vector[N] log_lik;
+  
+  // Generate predictive distributions for GPA
+  for (i in 1:N)
+    ypred[i] = normal_rng(mu[i], sigma);
+  
+  // log likelihoods
+  for (i in 1:N)
+    log_lik[i] = normal_lpdf(y[i] | mu[i], sigma);
+}
 ```
 
 **Running the model**
 
 ```{r data_pooled, warning=FALSE, message=FALSE}
 data_pooled <- list(N = nrow(FirstYearGPA),
-                    x = subset(FirstYearGPA, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                    x = subset(FirstYearGPA, select = c('HSGPA', 'SATV', 'SATM',
+                                                        'HU','SS')),
                     y = FirstYearGPA$GPA,
                     musigma = 100,
                     sigmasigma = 10)
@@ -125,8 +176,108 @@ $$
 
 **Stan code**
 
-```{r}
-writeLines(readLines("hierarchical.stan"))
+```{stan, output.var="hier", eval = FALSE}
+data {
+  int<lower=0> N1;
+  int<lower=0> N2;
+  int<lower=0> N3;
+  int<lower=0> N4;
+  matrix[N1,5] x1;
+  matrix[N2,5] x2;
+  matrix[N3,5] x3;
+  matrix[N4,5] x4;
+  vector[N1] y1;
+  vector[N2] y2;
+  vector[N3] y3;
+  vector[N4] y4;
+  real musigma;
+  real sigmasigma;
+}
+
+parameters {
+  // parameters
+  real alpha1;
+  real alpha2;
+  real alpha3;
+  real alpha4;
+  vector[5] betas1;
+  vector[5] betas2;
+  vector[5] betas3;
+  vector[5] betas4;
+  real<lower=0> sigma;
+  
+  // hyperparameters
+  real pmualpha;
+  real<lower=0> psalpha;
+  vector[5] pmubetas;
+  vector<lower=0>[5] psbetas;
+}
+
+transformed parameters {
+  vector[N1] mu1 = alpha1 + betas1[1]*x1[,1] + betas1[2]*x1[,2] 
+                   + betas1[3]*x1[,3] + betas1[4]*x1[,4] + betas1[5]*x1[,5];
+  vector[N2] mu2 = alpha2 + betas2[1]*x2[,1] + betas2[2]*x2[,2] 
+                   + betas2[3]*x2[,3] + betas2[4]*x2[,4] + betas2[5]*x2[,5];
+  vector[N3] mu3 = alpha3 + betas3[1]*x3[,1] + betas3[2]*x3[,2] 
+                   + betas3[3]*x3[,3] + betas3[4]*x3[,4] + betas3[5]*x3[,5];
+  vector[N4] mu4 = alpha4 + betas4[1]*x4[,1] + betas4[2]*x4[,2] 
+                   + betas4[3]*x4[,3] + betas4[4]*x4[,4] + betas4[5]*x4[,5];
+}
+
+model {
+  // hyperpriors
+  pmualpha ~ normal(0, musigma);
+  psalpha ~ normal(0, sigmasigma);
+  for (i in 1:5){
+    pmubetas[i] ~ normal(0, musigma);
+    psbetas[i] ~ normal(0, sigmasigma); 
+  }
+  
+  // priors
+  alpha1 ~ normal(pmualpha, psalpha);
+  alpha2 ~ normal(pmualpha, psalpha);
+  alpha3 ~ normal(pmualpha, psalpha);
+  alpha4 ~ normal(pmualpha, psalpha);
+  betas1 ~ normal(pmubetas, psbetas);
+  betas2 ~ normal(pmubetas, psbetas);
+  betas3 ~ normal(pmubetas, psbetas);
+  betas4 ~ normal(pmubetas, psbetas);
+  sigma ~ normal(0, sigmasigma);
+  
+  // likelihoods
+  y1 ~ normal(mu1, sigma);
+  y2 ~ normal(mu2, sigma);
+  y3 ~ normal(mu3, sigma);
+  y4 ~ normal(mu4, sigma);
+}
+
+generated quantities{
+  vector[N1] ypred1;
+  vector[N2] ypred2;
+  vector[N3] ypred3;
+  vector[N4] ypred4;
+  vector[N1+N2+N3+N4] log_lik;
+  
+  // Generate predictive distributions for GPA
+  for (i in 1:N1)
+    ypred1[i] = normal_rng(mu1[i], sigma);
+  for (i in 1:N2)
+    ypred2[i] = normal_rng(mu2[i], sigma);
+  for (i in 1:N3)
+    ypred3[i] = normal_rng(mu3[i], sigma);
+  for (i in 1:N4)
+    ypred4[i] = normal_rng(mu4[i], sigma);
+    
+  // log likelihoods
+  for (i in 1:N1)
+    log_lik[i] = normal_lpdf(y1[i] | mu1[i], sigma);
+  for (i in 1:N2)
+    log_lik[N1+i] = normal_lpdf(y2[i] | mu2[i], sigma);
+  for (i in 1:N3)
+    log_lik[N1+N2+i] = normal_lpdf(y3[i] | mu3[i], sigma);
+  for (i in 1:N4)
+    log_lik[N1+N2+N3+i] = normal_lpdf(y4[i] | mu4[i], sigma);
+}
 ```
 
 **Running the model**
@@ -141,10 +292,18 @@ data_hierarchical <- list(N1 = nrow(male_white),
                             N2 = nrow(male_non_white),
                             N3 = nrow(female_white),
                             N4 = nrow(female_non_white),
-                            x1 = subset(male_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-                            x2 = subset(male_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-                            x3 = subset(female_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
-                            x4 = subset(female_non_white, select = c('HSGPA', 'SATV', 'SATM','HU','SS')),
+                            x1 = subset(male_white, select = c('HSGPA','SATV',
+                                                               'SATM','HU',
+                                                               'SS')),
+                            x2 = subset(male_non_white, select = c('HSGPA','SATV', 
+                                                                   'SATM','HU',
+                                                                   'SS')),
+                            x3 = subset(female_white, select = c('HSGPA','SATV',
+                                                                 'SATM','HU',
+                                                                 'SS')),
+                            x4 = subset(female_non_white, select = c('HSGPA','SATV', 
+                                                                     'SATM','HU',
+                                                                     'SS')),
                             y1 = male_white$GPA,
                             y2 = male_non_white$GPA,
                             y3 = female_white$GPA,
@@ -159,25 +318,22 @@ fit_hierarchical <-mod_hierarchical$sample(data_hierarchical, refresh = 0,
                                            seed = 03091900)
 ```
 
-Weakly informative normal priors were used in both models. N(0,10) was the prior distribution for $\sigma$ in both models. In the pooled model, N(0,100) was the prior for both $\alpha$ and all $\beta_k$. The hierarchical model had similar priors: N(0,100) for all means $\mu_{\alpha}$ and $\mu_{\beta_k}$, and N(0,10) for all standard deviations $\sigma_{\alpha}$ and $\sigma_{\beta_k}$. We thought these priors reasonable for multiple reasons. Firstly, they all center on 0, which was thought wisest as we have no information whether the intercept $\alpha$ or the slopes $\beta_k$ should be positive or negative. Secondly, the standard deviations, 100 for the means and 10 for the standard deviations, were considered large enough to produce wide enough (but not too wide) prior distributions.
-
-As can be seen from the above code lines, default values were used for running the MCMC chains. That is, 4 chains of 2000 iterations were run, and the first 1000 iterations of each chain were considered warm-up.
-
-\newpage
 
 # Analysis and Results
+
+This section contains the analysis of the both models. The analysis contains convergence diagnostics, posterior predictive checks, and prior sensitivity analysis. This section also contains discussion about posterior distributions and model comparison in above order.
 
 ## Converge diagnostics
 
 ### Pooled model
 
-```{r pooled_rhat}
+```{r pooled_rhat, results='hold'}
 summary_pooled <- fit_pooled$summary()
 sum(summary_pooled$rhat > 1.01)
 sum(summary_pooled$rhat < 0.99)
 ```
 
-```{r pooled_ess}
+```{r pooled_ess, results='hold'}
 mean(summary_pooled$ess_tail)
 sum(summary_pooled$ess_tail<400)
 mean(summary_pooled$ess_bulk)
@@ -188,13 +344,13 @@ None of the $\hat{R}$-values for the pooled model exceeds 1.01 which indicates t
 
 ### Hierarchical model
 
-```{r hierarchical_rhat}
+```{r hierarchical_rhat, results='hold'}
 summary_hierarchical <- fit_hierarchical$summary()
 sum(summary_hierarchical$rhat > 1.01)
 sum(summary_hierarchical$rhat < 0.99)
 ```
 
-```{r hierarchical_ess}
+```{r hierarchical_ess, results='hold'}
 mean(summary_hierarchical$ess_tail)
 sum(summary_hierarchical$ess_tail<400)
 mean(summary_hierarchical$ess_bulk)
@@ -206,11 +362,13 @@ Similarly to the pooled model, in the hierarchical model, no $\hat{R}$-values ex
 
 ## Posterior predictive checks
 
-48 histograms of replications of the data (created based on the posterior predictive distributions) are shown for all the models. In addition, there is over layed distributions and empirical cumulative distribution (ecdf) functions of 100 replications in the two with the original distribution and ecdf. These different plots of replication are compared to the plots of the original data to investigate, how good predictions fitted model can make. The closer the replications are original data, the better the predictions are.
+48 histograms of replications of the data (created based on the posterior predictive distributions) are shown for all the models. In addition, there is overlayed distributions and empirical cumulative distribution (ecdf) functions of 100 replications in the two with the original distribution and ecdf. These different plots of replication are compared to the plots of the original data to investigate, how good predictions fitted model can make. The closer the replications are original data, the better the predictions are.
 
 ### Pooled model
 
-```{r pooled_posterior, fig.height=7.2}
+As it can be seen in Figure \@ref(fig:pooledposterior), the histograms and overlayed distribution functions have almost same width as the original data, and they follow quite nicely the shape of the original data. This means that the replications are good, and follows well original data. Moreover, replicated ecdf functions follow the shape of the ecdf of the original data, and the variation around the original ecdf function is quite low. Finally, the model is good in posterior prediction. 
+
+```{r pooledposterior, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the pooled model are shown using histograms. In addition the original data is shown in left top corner. Below the histograms, the 100 distributions of the replications are over layed with original data on left. On right 100 ecdf are over layed with original data. "}
 y <- FirstYearGPA$GPA
 ypred <- fit_pooled$draws("ypred", format = "matrix")
 
@@ -222,7 +380,11 @@ grid.arrange( ppc_hist(y, ypred[1:48,]),
 
 ### Hierarchical model
 
-```{r hierarchical_posterior1, fig.height=7.2}
+As it can be seen when comparing the Figures \@ref(fig:hierarchicalposterior1), \@ref(fig:hierarchicalposterior2), \@ref(fig:hierarchicalposterior3), and \@ref(fig:hierarchicalposterior4), for white students the replications follow better the original data than non white students replications. The biggest reason for that is the tinier amount of the data points in non white groups. It can bee seen from Figures \@ref(fig:hierarchicalposterior3) and \@ref(fig:hierarchicalposterior4), that replications of non white groups have more width variations and more out layers than original data. In addition, edcfs have bigger variations in non white groups than in white groups.
+
+In overall, the replications of the white group are quite good (not as good as in pooled model) and models in non white groups are not so good since replications in these groups don't follow the original data.
+
+```{r hierarchicalposterior1, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for data group of white male students are shown using histograms. In addition the original data is shown in left top corner. Below the histograms, the 100 distributions of the replications are over layed with original data on left. On right 100 ecdf are over layed with original data. "}
 y1 <- data_hierarchical$y1
 ypred1 <- fit_hierarchical$draws("ypred1", format = "matrix")
 
@@ -232,7 +394,7 @@ ppc_ecdf_overlay(y1, ypred1[1:100,]),
               layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r hierarchical_posterior2, fig.height=7.2}
+```{r hierarchicalposterior2, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for data group of non white male students are shown using histograms. In addition the original data is shown in left top corner. Below the histograms, the 100 distributions of the replications are over layed with original data on left. On right 100 ecdf are over layed with original data. "}
 y2 <- data_hierarchical$y2
 ypred2 <- fit_hierarchical$draws("ypred2", format = "matrix")
 
@@ -242,7 +404,7 @@ ppc_ecdf_overlay(y2, ypred2[1:100,]),
               layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r hierarchical_posterior3, fig.height=7.2}
+```{r hierarchicalposterior3, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for data group of white female students are shown using histograms. In addition the original data is shown in left top corner. Below the histograms, the 100 distributions of the replications are over layed with original data on left. On right 100 ecdf are over layed with original data. "}
 y3 <- data_hierarchical$y3
 ypred3 <- fit_hierarchical$draws("ypred3", format = "matrix")
 
@@ -252,7 +414,7 @@ ppc_ecdf_overlay(y3, ypred3[1:100,]),
               layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r hierarchical_posterior4, fig.height=7.2}
+```{r hierarchicalposterior4, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for data group of non white female students are shown using histograms. In addition the original data is shown in left top corner. Below the histograms, the 100 distributions of the replications are over layed with original data on left. On right 100 ecdf are over layed with original data. "}
 y4 <- data_hierarchical$y4
 ypred4 <- fit_hierarchical$draws("ypred4", format = "matrix")
 
@@ -262,6 +424,7 @@ ppc_ecdf_overlay(y4, ypred4[1:100,]),
               layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
+\newpage
 
 ## Predictive performance assessment
 
@@ -272,7 +435,8 @@ Predictive performance assessment was not performed for the models. The reason f
 
 The original priors utilised were N$(0,100)$ for $\alpha$ and $\beta$ or their means, and N$(0,10)$ for all standard deviations. For prior sensitivity analysis, the priors presented in the table below were tested to see how much the posteriors of $\alpha$ and $\beta_k$ would differ from the original. Altogether, 8 prior combinations were tested, including the original priors for reference. The same prior combinations were used for testing both models. Narrower priors, e.g. N$(0,0.1)$, were excluded from the analysis, as they would not be weakly informative anymore.
 
-```{r, echo=FALSE}
+```{r posterior_sensitivity1, echo=FALSE, message=FALSE, warning=FALSE}
+library(kableExtra)
 musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
 sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
 
@@ -285,19 +449,20 @@ for (i in 1:length(musigmas)) {
   prior_table[2, i] <- paste0("N(0,", sigmasigmas[i], ")")
 }
 
-as.data.frame(prior_table)
+prior_table <- as.data.frame(prior_table)
+kable(t(prior_table), format = "latex")
 ```
 
 ### Pooled model
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 # Takes ages to run, beware!
 dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
                  c("1", "2", "3", "4", "5", "6", "7", "8"))
 mus_pooled <- matrix(nrow = 6, ncol = length(musigmas), dimnames = dimnames)
 sigmas_pooled <- matrix(nrow = 6, ncol = length(musigmas), dimnames = dimnames)
 
-for (i in 1:length(musigmas)) {
+for (i in 1:length(musigmas)) { 
   data_pooled_sens <- list(N = nrow(FirstYearGPA),
                          x = subset(FirstYearGPA, select = c('HSGPA', 'SATV',
                                                              'SATM','HU','SS')),
@@ -312,18 +477,16 @@ for (i in 1:length(musigmas)) {
 }
 ```
 
-```{r, echo=FALSE}
-print("Posterior means")
-as.data.frame(mus_pooled)
-print("Posterior SDs")
-as.data.frame(sigmas_pooled)
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+kable(as.data.frame(mus_pooled), format = "latex", caption = "Posterior means")
+kable(as.data.frame(sigmas_pooled), format = "latex", caption = "Posterior SDs")
 ```
 
 The above results show that regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are very similar to each other. Therefore it can be concluded that the pooled model is not sensitive to changes in the priors.
 
 ### Hierarchical model
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 # Takes ages to run, beware!
 dimnames <- list(c("alpha1", "alpha2", "alpha3", "alpha4",
                    "beta1_1", "beta2_1", "beta3_1", "beta4_1", "beta5_1",
@@ -334,7 +497,7 @@ dimnames <- list(c("alpha1", "alpha2", "alpha3", "alpha4",
 mus_hierarchical <- matrix(nrow = 24, ncol = length(musigmas), dimnames = dimnames)
 sigmas_hierarchical <- matrix(nrow = 24, ncol = length(musigmas), dimnames = dimnames)
 
-for (i in 1:length(musigmas)) {
+for (i in 1:length(musigmas)) { 
   data_hierarchical_sens <- list(N1 = nrow(male_white),
                                  N2 = nrow(male_non_white),
                                  N3 = nrow(female_white),
@@ -358,11 +521,9 @@ for (i in 1:length(musigmas)) {
 }
 ```
 
-```{r, echo=FALSE}
-print("Posterior means")
-as.data.frame(mus_hierarchical)
-print("Posterior SDs")
-as.data.frame(sigmas_hierarchical)
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+kable(as.data.frame(mus_hierarchical), format = "latex", caption = "Posterior means")
+kable(as.data.frame(sigmas_hierarchical), format = "latex", caption = "Posterior SDs")
 ```
 
 There is slightly more variation in the posteriors of the hierarchical model when various priors are utilised, but the posteriors look quite similar nonetheless. It can be concluded that the hierarchical model, similarly to the pooled model, is not sensitive to changes in the priors.
@@ -372,7 +533,7 @@ There is slightly more variation in the posteriors of the hierarchical model whe
 
 Next, let us inspect and visualise the posterior distributions of $\alpha$ and $\beta_k$. The table below contains the posterior distributions of the six variables for the pooled model and all 4 groups of the hierarchical model separately.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
                  c("pooled", "h. group 1", "h. group 2",
                    "h. group 3", "h. group 4"))
@@ -400,14 +561,14 @@ for (i in 1:4) {
   }
 }
 
-as.data.frame(post_table)
+kable(as.data.frame(post_table), format = "latex")
 ```
 
 Let us also plot the posterior distributions.
 
 ### Pooled model
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 par(mfrow = c(3,2))
 x <- seq(-2, 2, length = 1000)
 y <- dnorm(x, mean = summary_pooled$mean[2], sd = summary_pooled$sd[2])
@@ -423,16 +584,18 @@ The plot shows that the slope parameter $\beta_1$, multiplying the variable for 
 
 ### Hierarchical model
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Each group's parameters get its own plots (4 3x2 plots in total)
 for (i in 1:4) {
   par(mfrow = c(3,2))
   x <- seq(-2, 2, length = 1000)
-  y <- dnorm(x, mean = summary_hierarchical$mean[1+i], sd = summary_hierarchical$sd[1+i])
+  y <- dnorm(x, mean = summary_hierarchical$mean[1+i],
+             sd = summary_hierarchical$sd[1+i])
   plot(x, y, type = "l", xlab = "alpha")
   for (j in 1:5) {
     x <- seq(-1, 1, length = 1000)
-    y <- dnorm(x, mean = summary_hierarchical$mean[5+(i-1)*5+j], sd = summary_hierarchical$sd[5+(i-1)*5+j])
+    y <- dnorm(x, mean = summary_hierarchical$mean[5+(i-1)*5+j], 
+               sd = summary_hierarchical$sd[5+(i-1)*5+j])
     plot(x, y, type = "l", xlab = paste0("beta", j))
   }
 }
@@ -445,7 +608,7 @@ The posteriors of the hierarchical model are quite similar to the pooled model. 
 
 The log likelihoods of the data have been calculated in the "generated quantities" blocks of the models. They are given to the "loo" function of the "loo" package, and the individual results and model comparison are printed.
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 log_lik_pooled <- fit_pooled$draws("log_lik", format = "matrix")
 log_lik_hierarchical <- fit_hierarchical$draws("log_lik", format = "matrix")
 
@@ -469,13 +632,11 @@ The overall problem in the project was that there was not enough data. For examp
 
 There were divergences in the hierarchical model. If there was more time, the divergences could have been solved by analysing more the running of the model; The default values (the number of the chains, the number of the iterations etc.) were utilised during the model fitting. Furthermore, testing out different priors to solve the divergence issue.
 
-\newpage
 
 # Conclusion
 
 Based on the analysis, the pooled model describes the data better than the hierarchical model. However, both models performed well. The hierarchical model describes the white and non white students differently. So according to the hierarchical model, there were more differences between white and non-white students than between male and female students. This can be seen most clearly from the posterior distributions of the $\alpha$s.   
 
-\newpage
 
 # Self-reflection
 
