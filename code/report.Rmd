@@ -54,7 +54,7 @@ library(gridExtra)
 library(loo)
 ```
 
-```{r databarplot, fig.cap="The division of the data in four different groups. The amounts of the data points in the groups can be seen in bars.", echo=FALSE, fig.width=6, fig.height=4}
+```{r databarplot, fig.cap="The division of the data in four different groups. The amounts of the data points in the groups can be seen in bars.", echo=FALSE, fig.width=4, fig.height=3}
 White <- FirstYearGPA$White
 White <- gsub(1, "White", White)
 White <- gsub(0, "Non-White", White)
@@ -156,7 +156,7 @@ fit_pooled <- mod_pooled$sample(data_pooled, refresh = 0, seed = 03091900)
 
 ## Hierarchical model
 
-In the hierarchical model, students have been divided in four different groups: 1. white males, 2. non-white males, 3. white females, and 4. non-white females. The groups now have their own parameters $\alpha_j$ and $\beta_{kj}$, where $j$ denotes the group a student belongs to. The parameters $\alpha_j$ and $\beta_{kj}$ have common hyperparameters , implying the parameters can be different across groups, but they have something common as well.
+In the hierarchical model, students have been divided in four different groups: 1. white males, 2. non-white males, 3. white females, and 4. non-white females. The groups now have their own parameters $\alpha_j$ and $\beta_{kj}$, where $j$ denotes the group a student belongs to. The parameters $\alpha_j$ and $\beta_{kj}$ have common hyperparameters, implying the parameters can be different across groups, but they have something common as well.
 
 **Mathematical notation**
 
@@ -453,8 +453,7 @@ for (i in 1:length(musigmas)) {
   prior_table[2, i] <- paste0("N(0,", sigmasigmas[i], ")")
 }
 
-prior_table <- as.data.frame(prior_table)
-kable(t(prior_table), format = "latex", caption = "Used priors for sensitivity analysis")
+kable(as.data.frame(prior_table), format = "latex", caption = "Used priors for sensitivity analysis")
 ```
 
 ### Pooled model
@@ -526,11 +525,11 @@ for (i in 1:length(musigmas)) {
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-kable(as.data.frame(mus_hierarchical), format = "latex", caption = "Sensitivity analysis of the hierarchical model: Posterior means")
-kable(as.data.frame(sigmas_hierarchical), format = "latex", caption = "Sensitivity analysis of the hierarchical model: Posterior SDs")
+kable(as.data.frame(mus_hierarchical[1:9,]), format = "latex", caption = "Sensitivity analysis of the hierarchical model: Posterior means")
+kable(as.data.frame(sigmas_hierarchical[1:9,]), format = "latex", caption = "Sensitivity analysis of the hierarchical model: Posterior SDs")
 ```
 
-The hierarchical model's sensitivity was tested similarly to the pooled model. The resulting posteriors are shown in two tables. There is slightly more variation in the posteriors of the hierarchical model when various priors are utilised, but the posteriors look quite similar nonetheless. It can be concluded that the hierarchical model, similarly to the pooled model, is not sensitive to changes in the priors.
+The hierarchical model's sensitivity was tested similarly to the pooled model. The resulting posteriors are shown in the tables only partially, as the full tables would be too voluminous. Furthermore, the results are quite similar for all parameters. There is slightly more variation in the posteriors of the hierarchical model compared to the pooled model when various priors are utilised, but the posteriors look quite similar nonetheless. It can be concluded that the hierarchical model, similarly to the pooled model, is not sensitive to changes in the priors.
 
 
 ## Posterior distributions
