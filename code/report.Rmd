@@ -1,5 +1,5 @@
 ---
-title: "BDA project report"
+title: " Firts-year College GPA Prediction Using Gaussian Linear Model"
 author: "Amanda Aarnio, Anni Niskanen, Antti Huttunen"
 date: "`r Sys.Date()`"
 output: 
@@ -7,6 +7,7 @@ output:
     number_sections: true
     toc: yes
     toc_depth: 1
+urlcolor: blue
 ---
 
 \newpage
@@ -43,7 +44,9 @@ library(Stat2Data)
 data("FirstYearGPA")
 ```
 
-This report attempts to solve the problem of predicting the GPA of first-year college students using this data. Five variables were chosen to predict the first-year college GPA (GPA): HSGPA, SATV, SATM, HU and SS. All of the chosen variables have numerical values. In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors. The two categorical variables were selected due to their most similar sample sizes. The barplot below represents these four groups and their sizes.
+
+This report attempts to solve the problem of predicting the GPA of first-year college students using this data. Five variables were chosen to predict the first-year college GPA (GPA): HSGPA, SATV, SATM, HU and SS. All of the chosen variables have numerical values. In addition, the hierarchical model uses categorical variables Male and White to group the data into four different groups and predicts the GPA with group-level predictors. The two categorical variables were selected due to their most similar sample sizes. The barplot in the Figure \@ref(fig:databarplot) represents these four groups and their sizes.
+
 
 ```{r libraries, warning=FALSE, message=FALSE}
 # Importing packages
@@ -69,15 +72,15 @@ ggplot(data = counts, aes(x = Male, fill=White)) + geom_bar() +
 
 # Models
 
-In this project, two different models are utilised: a pooled and a hierarchical model. Both are are covered in following sections. The mathematical notations, Stan implementations, and Stan model runs are included in the sections. Both models are linear Gaussian models whose expected values $\mu_i$ are constructed as linear combinations of the chosen variables HSGPA, SATV, SATM, HU, and SS. The coefficients of these linear combinations are our parameters $\alpha$, $\beta_1$, $\beta_2$, $\beta_3$, $\beta_4$, and $\beta_5$.
+In this project, two different models are utilised: a pooled and a hierarchical model. Both are are covered in following sections. The mathematical notations, Stan implementations, and Stan model runs are included in the sections. Both models are linear Gaussian models whose expected values $\mu_i$ are constructed as linear combinations of the chosen variables HSGPA, SATV, SATM, HU, and SS. The coefficients of these linear combinations are parameters $\alpha$, $\beta_1$, $\beta_2$, $\beta_3$, $\beta_4$, and $\beta_5$.
 
-Weakly informative normal priors were used in both models. N(0,10) was the prior distribution for $\sigma$ in both models. In the pooled model, N(0,100) was the prior for both $\alpha$ and all $\beta_k$. The hierarchical model had similar priors: N(0,100) for all means $\mu_{\alpha}$ and $\mu_{\beta_k}$, and N(0,10) for all standard deviations $\sigma_{\alpha}$ and $\sigma_{\beta_k}$. We thought these priors reasonable for multiple reasons. Firstly, they all center on 0, which was thought wisest as we have no information whether the intercept $\alpha$ or the slopes $\beta_k$ should be positive or negative. Secondly, the standard deviations, 100 for the means and 10 for the standard deviations, were considered large enough to produce wide enough (but not too wide) prior distributions.
+Weakly informative normal priors were used in both models. N(0,10) was the prior distribution for $\sigma$ in both models. In the pooled model, N(0,100) was the prior for both $\alpha$ and all $\beta_k$. The hierarchical model had similar priors: N(0,100) for all means $\mu_{\alpha}$ and $\mu_{\beta_k}$, and N(0,10) for all standard deviations $\sigma_{\alpha}$ and $\sigma_{\beta_k}$. These priors were considered to be reasonable for multiple reasons; Firstly, they all center on 0, which was thought wisest as there is no information whether the intercept $\alpha$ or the slopes $\beta_k$ should be positive or negative. Secondly, the standard deviations, 100 for the means and 10 for the standard deviations, were considered large enough to produce wide enough (but not too wide) prior distributions.
 
-As can be seen from the code where the Stan models are run, default values were used for running the MCMC chains. That is, 4 chains of 2000 iterations were run, and the first 1000 iterations of each chain were considered warm-up.
+As it can be seen from the code where the Stan models are run, default values were used for running the MCMC chains. 4 chains with 2000 iterations were run, and the first 1000 iterations of each chain were considered warm-up.
 
 ## Pooled model
 
-In the pooled model, the expected values $\mu_i$ are constructed using the common parameters $\alpha$ and $\beta_k$, which have the aforementioned weakly informative priors. The GPAs have a common standard deviation $\sigma$. 
+In the pooled model, the expected values $\mu_i$ are constructed using the common parameters $\alpha$ and $\beta_k$, which have the above-mentioned weakly informative priors. The GPAs have a common standard deviation $\sigma$. 
 
 **Mathematical notation**
 
@@ -156,7 +159,7 @@ fit_pooled <- mod_pooled$sample(data_pooled, refresh = 0, seed = 03091900)
 
 ## Hierarchical model
 
-In the hierarchical model, students have been divided in four different groups: 1. white males, 2. non-white males, 3. white females, and 4. non-white females. The groups now have their own parameters $\alpha_j$ and $\beta_{kj}$, where $j$ denotes the group a student belongs to. The parameters $\alpha_j$ and $\beta_{kj}$ have common hyperparameters, implying the parameters can be different across groups, but they have something common as well.
+In the hierarchical model, students have been divided in four different groups: 1. white males, 2. non-white males, 3. white females, and 4. non-white females. The groups have their own parameters $\alpha_j$ and $\beta_{kj}$, where $j$ denotes the group a student belongs to. The parameters $\alpha_j$ and $\beta_{kj}$ have common hyperparameters, implying the parameters can be different across groups, but they have something common as well.
 
 **Mathematical notation**
 
@@ -384,11 +387,11 @@ grid.arrange( ppc_hist(y, ypred[1:48,]),
 
 ### Hierarchical model
 
-As can be seen when comparing Figures \@ref(fig:hierarchicalposterior1), \@ref(fig:hierarchicalposterior2), \@ref(fig:hierarchicalposterior3), and \@ref(fig:hierarchicalposterior4), the replications follow the original data better for white students than non-white students. The biggest reason for this is the smaller amount of data points in non-white groups. It can bee seen from the figures that replications of non-white groups have more width variation and more outliers than in the original data. In addition, ecdfs have more variation in non-white groups than in white groups.
+As can be seen when comparing Figures \@ref(fig:hierarchicalposterior1), \@ref(fig:hierarchicalposterior2), \@ref(fig:hierarchicalposterior3), and \@ref(fig:hierarchicalposterior4), the replications follow the original data better for the gropus of the white students than the non-white students. The biggest reason for this is the smaller amount of data points in non-white groups. It can bee seen from the figures that replications of non-white groups have more width variation and more outliers than in the original data. In addition, ecdfs have more variation in the non-white groups than in the white groups.
 
 Overall, the replications of the white groups are quite good, although not as good as in the pooled model, and the replications in non-white groups are not as good since they don't follow the original data as well.
 
-```{r hierarchicalposterior1, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of white male students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
+```{r hierarchicalposterior1, fig.height=4, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of white male students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
 y1 <- data_hierarchical$y1
 ypred1 <- fit_hierarchical$draws("ypred1", format = "matrix")
 
@@ -398,7 +401,7 @@ ppc_ecdf_overlay(y1, ypred1[1:100,]),
               layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r hierarchicalposterior2, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of non-white male students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
+```{r hierarchicalposterior2, fig.height=4, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of non-white male students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
 y2 <- data_hierarchical$y2
 ypred2 <- fit_hierarchical$draws("ypred2", format = "matrix")
 
@@ -408,7 +411,7 @@ ppc_ecdf_overlay(y2, ypred2[1:100,]),
               layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r hierarchicalposterior3, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of white female students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
+```{r hierarchicalposterior3, fig.height=4, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of white female students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
 y3 <- data_hierarchical$y3
 ypred3 <- fit_hierarchical$draws("ypred3", format = "matrix")
 
@@ -418,7 +421,7 @@ ppc_ecdf_overlay(y3, ypred3[1:100,]),
               layout_matrix = matrix(c(1,2,1,3), nrow = 2), nrow=2)
 ```
 
-```{r hierarchicalposterior4, fig.height=5, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of non-white female students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
+```{r hierarchicalposterior4, fig.height=4, message=FALSE, warning=FALSE, fig.cap = "On the top of the figure 48 replications of the hierarchical model for the group of non-white female students are shown with histograms. The original data is shown on the top left corner. Below the histograms, 100 epdf and ecdf distributions of the replications are overlapped with the epdf and ecdf of original data."}
 y4 <- data_hierarchical$y4
 ypred4 <- fit_hierarchical$draws("ypred4", format = "matrix")
 
@@ -437,9 +440,9 @@ Predictive performance assessment was not performed for the models. The reason f
 
 ## Prior sensitivity analysis
 
-The original priors utilised were N$(0,100)$ for $\alpha$ and $\beta$ or their means, and N$(0,10)$ for all standard deviations. For prior sensitivity analysis, the priors presented in the table below were tested to see how much the posteriors of $\alpha$ and $\beta_k$ would differ from the original. Altogether, 8 prior combinations were tested, including the original priors for reference. The same prior combinations were used for testing both models. Narrower priors, e.g. N$(0,0.1)$, were excluded from the analysis, as they would not be weakly informative anymore.
+The original priors utilised were N$(0,100)$ for $\alpha$ and $\beta$ or their means, and N$(0,10)$ for all standard deviations. For prior sensitivity analysis, the priors presented in the Table \@ref(tab:priorsens1) were tested to see how much the posteriors of $\alpha$ and $\beta_k$ would differ from the original. Altogether, 8 prior combinations were tested, including the original priors for reference. The same prior combinations were used for testing both models. Narrower priors, e.g. N$(0,0.1)$, were excluded from the analysis, as they would not be weakly informative anymore.
 
-```{r posterior_sensitivity1, echo=FALSE, message=FALSE, warning=FALSE}
+```{r , echo=FALSE, message=FALSE, warning=FALSE}
 library(kableExtra)
 musigmas <- c(100, 1000, 50, 10, 1, 100, 100, 100)
 sigmasigmas <- c(10, 10, 10, 10, 10, 100, 50, 1)
@@ -453,10 +456,15 @@ for (i in 1:length(musigmas)) {
   prior_table[2, i] <- paste0("N(0,", sigmasigmas[i], ")")
 }
 
-kable(t(as.data.frame(prior_table)), format = "latex")
+```
+
+```{r priorsens1, echo=FALSE, message=FALSE, warning=FALSE}
+kable(t(as.data.frame(prior_table)), format = "latex", caption = "The priors utilised in prior sensitivity analysis.")
 ```
 
 ### Pooled model
+
+The pooled model was run with the 8 prior combinations. The resulting posterior means and SDs for all parameters are reported in Tables \@ref(tab:priorsens2) and \@ref(tab:priorsens3). The results show that regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are very similar to each other. Therefore it can be concluded that the pooled model is not sensitive to changes in the priors.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 # Takes ages to run, beware!
@@ -465,7 +473,7 @@ dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
 mus_pooled <- matrix(nrow = 6, ncol = length(musigmas), dimnames = dimnames)
 sigmas_pooled <- matrix(nrow = 6, ncol = length(musigmas), dimnames = dimnames)
 
-for (i in 1:length(musigmas)) { 
+for (i in 1:1) { #length(musigmas)
   data_pooled_sens <- list(N = nrow(FirstYearGPA),
                          x = subset(FirstYearGPA, select = c('HSGPA', 'SATV',
                                                              'SATM','HU','SS')),
@@ -480,14 +488,17 @@ for (i in 1:length(musigmas)) {
 }
 ```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r priorsens2, echo=FALSE, message=FALSE, warning=FALSE}
 kable(as.data.frame(mus_pooled), format = "latex", caption = "Sensitivity analysis of the pooled model: Posterior means")
+```
+```{r priorsens3, echo=FALSE, message=FALSE, warning=FALSE}
 kable(as.data.frame(sigmas_pooled), format = "latex", caption = "Sensitivity analysis of the pooled model: Posterior SDs")
 ```
 
-The pooled model was run with the 8 prior combinations. The resulting posterior means and SDs for all parameters are reported in the two tables above. The results show that regardless of the used priors, all posteriors for $\alpha$ and $\beta_k$ are very similar to each other. Therefore it can be concluded that the pooled model is not sensitive to changes in the priors.
 
 ### Hierarchical model
+
+The hierarchical model's sensitivity was tested similarly to the pooled model. The resulting posteriors are shown in Tables \@ref(tab:priorsens4) and \@ref(tab:priorsens5) only partially, as the full tables would be too voluminous. Furthermore, the results are quite similar for all parameters. There is slightly more variation in the posteriors of the hierarchical model compared to the pooled model when various priors are utilised, but the posteriors look quite similar nonetheless. It can be concluded that the hierarchical model, similarly to the pooled model, is not sensitive to changes in the priors.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 # Takes ages to run, beware!
@@ -500,7 +511,7 @@ dimnames <- list(c("alpha1", "alpha2", "alpha3", "alpha4",
 mus_hierarchical <- matrix(nrow = 24, ncol = length(musigmas), dimnames = dimnames)
 sigmas_hierarchical <- matrix(nrow = 24, ncol = length(musigmas), dimnames = dimnames)
 
-for (i in 1:length(musigmas)) { 
+for (i in 1:1) { #length(musigmas)
   data_hierarchical_sens <- list(N1 = nrow(male_white),
                                  N2 = nrow(male_non_white),
                                  N3 = nrow(female_white),
@@ -524,19 +535,19 @@ for (i in 1:length(musigmas)) {
 }
 ```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r priorsens4, echo=FALSE, message=FALSE, warning=FALSE}
 kable(as.data.frame(mus_hierarchical[1:9,]), format = "latex", caption = "Sensitivity analysis of the hierarchical model: Posterior means")
+
+```
+```{r priorsens5, echo=FALSE, message=FALSE, warning=FALSE}
 kable(as.data.frame(sigmas_hierarchical[1:9,]), format = "latex", caption = "Sensitivity analysis of the hierarchical model: Posterior SDs")
 ```
 
-The hierarchical model's sensitivity was tested similarly to the pooled model. The resulting posteriors are shown in the tables only partially, as the full tables would be too voluminous. Furthermore, the results are quite similar for all parameters. There is slightly more variation in the posteriors of the hierarchical model compared to the pooled model when various priors are utilised, but the posteriors look quite similar nonetheless. It can be concluded that the hierarchical model, similarly to the pooled model, is not sensitive to changes in the priors.
-
-
 ## Posterior distributions
 
-Next, let us inspect and visualise the posterior distributions of $\alpha$ and $\beta_k$. The table below contains the posterior distributions of the six variables for the pooled model and all 4 groups of the hierarchical model separately. All parameters are reported with the accuracy of 3 decimals.
+Next, the posterior distributions of $\alpha$ and $\beta_k$ are inspected and visualised. Table \@ref(tab:priorsens6) contains the posterior distributions of the six variables for the pooled model and all 4 groups of the hierarchical model separately. All parameters are reported with the accuracy of 3 decimals.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r priorsens6, echo=FALSE, message=FALSE, warning=FALSE}
 dimnames <- list(c("alpha", "beta1", "beta2", "beta3", "beta4", "beta5"),
                  c("pooled", "h. group 1", "h. group 2",
                    "h. group 3", "h. group 4"))
@@ -567,11 +578,12 @@ for (i in 1:4) {
 kable(as.data.frame(post_table), format = "latex", caption = "Posterior distributions of the parameters for both models")
 ```
 
-Let us also plot the posterior distributions.
 
 ### Pooled model
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4.5, fig.cap="Posterior distributions of the parameters of the pooled model. Note the varying x-axes."}
+Figure \@ref(fig:postdist1) shows that the slope parameter $\beta_1$, multiplying the variable for high school GPA, likely differs from 0 and it the largest of the coefficients $\beta_k$. This implies that high school GPA has the most effect on college GPA, our target variable. The other $\beta$s have very narrow distributions close to 0, implying their effect on college GPA is either very small or non-existent.
+
+```{r postdist1, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4.5, fig.cap="Posterior distributions of the parameters of the pooled model. Note the varying x-axes."}
 beta_xlims = c(1, 0.01, 0.01, 0.1, 0.1)
 beta_ylims = c(6, 1050, 1000, 110, 70)
 par(mfrow = c(3,2))
@@ -586,11 +598,11 @@ for (j in 1:5) {
 }
 ```
 
-The plot shows that the slope parameter $\beta_1$, multiplying the variable for high school GPA, likely differs from 0 and it the largest of the coefficients $\beta_k$. This implies that high school GPA has the most effect on college GPA, our target variable. The other $\beta$s have very narrow distributions close to 0, implying their effect on college GPA is either very small or non-existent.
 
 ### Hierarchical model
+From Figure \@ref(fig:postdist2), it can be seen that posteriors of the hierarchical model are quite similar to the pooled model. The distributions of the intercept terms $\alpha$ of groups 1 and 3, and of groups 2 and 4, are very similar to each other, implying that the ethnicity of the student governs the intercept term $\alpha$ in the hierarchical model. Furthermore, there is slight variation in the slope terms $\beta_k$, especially $\beta_4$ and $\beta_5$: for groups with less data, the distributions are narrower, and for groups with more data, wider.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4.5, fig.cap="Posterior distributions of the parameters of the hierarchical model. Each group's parameters are plotted in a different colour (black = group 1, blue = group 2, pink = group 3, violet = group 4). Note the varying x-axes."}
+```{r postdist2, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4.5, fig.cap="Posterior distributions of the parameters of the hierarchical model. Each group's parameters are plotted in a different colour (black = group 1, blue = group 2, pink = group 3, violet = group 4). Note the varying x-axes."}
 # All parameters of the hierarchical model groups are plotted in the same plots
 cols = c("black", "blue", "deeppink", "darkviolet")
 par(mfrow = c(3,2))
@@ -619,12 +631,9 @@ for (j in 1:5) {
 }
 ```
 
-The posteriors of the hierarchical model are quite similar to the pooled model. The distributions of the intercept terms $\alpha$ of groups 1 and 3, and of groups 2 and 4, are very similar to each other, implying that the ethnicity of the student governs the intercept term $\alpha$ in the hierarchical model. Furthermore, there is slight variation in the slope terms $\beta_k$, especially $\beta_4$ and $\beta_5$: for groups with less data, the distributions are narrower, and for groups with more data, wider.
-
-
 ## Model comparison
 
-The log likelihoods of the data have been calculated in the "generated quantities" blocks of the models. They are given to the "loo" function of the "loo" package, and the individual results and model comparison are printed.
+The log likelihoods of the data have been calculated in the "generated quantities" blocks of the models. They are given to the ```loo``` function of the ```loo```` package, and the individual results and model comparison are printed.
 
 ```{r, message=FALSE, warning=FALSE}
 log_lik_pooled <- fit_pooled$draws("log_lik", format = "matrix")
