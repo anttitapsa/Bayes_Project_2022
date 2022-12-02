@@ -54,7 +54,7 @@ library(gridExtra)
 library(loo)
 ```
 
-```{r databarplot, fig.cap= "The division of the data in four different groups. The amounts of the data points in the groups can be seen in bars.", echo=FALSE}
+```{r databarplot, fig.cap="The division of the data in four different groups. The amounts of the data points in the groups can be seen in bars.", echo=FALSE, fig.width=6, fig.height=4}
 White <- FirstYearGPA$White
 White <- gsub(1, "White", White)
 White <- gsub(0, "Non-White", White)
