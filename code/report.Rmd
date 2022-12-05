@@ -483,8 +483,8 @@ for (i in 1:length(musigmas)) {
   fit_pooled_sens <- mod_pooled$sample(data_pooled_sens, refresh = 0,
                                        seed = 03091900)
   summary_sens <- fit_pooled_sens$summary()
-  mus_pooled[,i] <- summary_sens$mean[2:7]
-  sigmas_pooled[,i] <- summary_sens$sd[2:7]
+  mus_pooled[,i] <- round(summary_sens$mean[2:7], 4)
+  sigmas_pooled[,i] <- round(summary_sens$sd[2:7], 4)
 }
 ```
 
@@ -493,6 +493,40 @@ kable(as.data.frame(mus_pooled), format = "latex", caption = "Sensitivity analys
 ```
 ```{r priorsens3, echo=FALSE, message=FALSE, warning=FALSE}
 kable(as.data.frame(sigmas_pooled), format = "latex", caption = "Sensitivity analysis of the pooled model: Posterior SDs")
+```
+
+```{r, fig.width=7, fig.height=3}
+alpha_mus <- mus_pooled[1,]
+alpha_sigmas <- sigmas_pooled[1,]
+beta_mus <- mus_pooled[2,]
+beta_sigmas <- sigmas_pooled[2,]
+
+beta_xlims <- c(1, 0.01, 0.01, 0.1, 0.1)
+beta_ylims <- c(6, 1050, 1000, 110, 70)
+lwd <- 0.2
+par(mfrow = c(1,2))
+
+# alpha
+x <- seq(-2, 2, length = 1000)
+y <- dnorm(x, mean = alpha_mus[1], sd = alpha_sigmas[1])
+plot(x, y, type = "l", xlab = "alpha", ylim = c(0, 1.25), lwd = lwd)
+for (i in 2:length(alpha_mus)) {
+  y <- dnorm(x, mean = alpha_mus[i], sd = alpha_sigmas[i])
+  lines(x, y, type = "l", col = "blue", lwd = lwd)
+}
+y <- dnorm(x, mean = alpha_mus[1], sd = alpha_sigmas[1])
+lines(x, y, type = "l", lwd = lwd)
+
+# beta1
+x <- seq(-beta_xlims[1], beta_xlims[1], length = 1000)
+y <- dnorm(x, mean = beta_mus[1], sd = beta_sigmas[1])
+plot(x, y, type = "l", xlab = "beta1", ylim = c(0, beta_ylims[1]), lwd = lwd)
+for (i in 2:length(beta_mus)) {
+  y <- dnorm(x, mean = beta_mus[i], sd = beta_sigmas[i])
+  lines(x, y, type = "l", col = "blue", lwd = lwd)
+}
+y <- dnorm(x, mean = beta_mus[1], sd = beta_sigmas[1])
+lines(x, y, type = "l", lwd = lwd)
 ```
 
 
@@ -530,8 +564,8 @@ for (i in 1:length(musigmas)) {
                                                    refresh = 0,
                                                    seed = 03091900)
   summary_sens <- fit_hierarchical_sens$summary()
-  mus_hierarchical[,i] <- summary_sens$mean[2:25]
-  sigmas_hierarchical[,i] <- summary_sens$sd[2:25]
+  mus_hierarchical[,i] <- round(summary_sens$mean[2:25], 4)
+  sigmas_hierarchical[,i] <- round(summary_sens$sd[2:25], 4)
 }
 ```
 
@@ -541,6 +575,40 @@ kable(as.data.frame(mus_hierarchical[1:9,]), format = "latex", caption = "Sensit
 ```
 ```{r priorsens5, echo=FALSE, message=FALSE, warning=FALSE}
 kable(as.data.frame(sigmas_hierarchical[1:9,]), format = "latex", caption = "Sensitivity analysis of the hierarchical model: Posterior SDs")
+```
+
+```{r, fig.width=7, fig.height=3}
+alpha_mus <- mus_hierarchical[1,]
+alpha_sigmas <- sigmas_hierarchical[1,]
+beta_mus <- mus_hierarchical[5,]
+beta_sigmas <- sigmas_hierarchical[5,]
+
+beta_xlims <- c(1, 0.01, 0.01, 0.1, 0.1)
+beta_ylims <- c(6, 1050, 1000, 110, 70)
+lwd <- 0.2
+par(mfrow = c(1,2))
+
+# alpha
+x <- seq(-2, 2, length = 1000)
+y <- dnorm(x, mean = alpha_mus[1], sd = alpha_sigmas[1])
+plot(x, y, type = "l", xlab = "alpha1", ylim = c(0, 1.25), lwd = lwd)
+for (i in 2:length(alpha_mus)) {
+  y <- dnorm(x, mean = alpha_mus[i], sd = alpha_sigmas[i])
+  lines(x, y, type = "l", col = "blue", lwd = lwd)
+}
+y <- dnorm(x, mean = alpha_mus[1], sd = alpha_sigmas[1])
+lines(x, y, type = "l", lwd = lwd)
+
+# beta1
+x <- seq(-beta_xlims[1], beta_xlims[1], length = 1000)
+y <- dnorm(x, mean = beta_mus[1], sd = beta_sigmas[1])
+plot(x, y, type = "l", xlab = "beta1_1", ylim = c(0, beta_ylims[1]), lwd = lwd)
+for (i in 2:length(beta_mus)) {
+  y <- dnorm(x, mean = beta_mus[i], sd = beta_sigmas[i])
+  lines(x, y, type = "l", col = "blue", lwd = lwd)
+}
+y <- dnorm(x, mean = beta_mus[1], sd = beta_sigmas[1])
+lines(x, y, type = "l", lwd = lwd)
 ```
 
 ## Posterior distributions
