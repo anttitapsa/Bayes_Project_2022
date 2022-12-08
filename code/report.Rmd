@@ -1,5 +1,5 @@
 ---
-title: " Firts-year College GPA Prediction Using Gaussian Linear Model"
+title: " First-year College GPA Prediction Using Gaussian Linear Model"
 author: "Amanda Aarnio, Anni Niskanen, Antti Huttunen"
 date: "`r Sys.Date()`"
 output: 
