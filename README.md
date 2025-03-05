@@ -1,4 +1,4 @@
-Project for the Bayesian Data Analysis Course at Aalto University.
+Project for the Bayesian Data Analysis Course at Aalto University. See the report on ```code/report.pdf```
 
 Contributors: Antti Huttunen, Amanda Aarnio, Anni Niskanen
 
