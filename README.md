@@ -1,4 +1,6 @@
-Project for the Bayesian Data Analysis Course at Aalto University
+Project for the Bayesian Data Analysis Course at Aalto University.
+
+Contributors: Antti Huttunen, Amanda Aarnio, Anni Niskanen
 
 ## Goal
 The goal is to predict the GPA of first-year college students based on the different variables. The prediction is done using two different models: the pooled model and the hierarchical model. I.e., the goal is to find the relation between the GPA and the provided variables.
